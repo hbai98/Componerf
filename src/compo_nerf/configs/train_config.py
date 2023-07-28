@@ -71,7 +71,6 @@ class OptimConfig:
     ckpt: Optional[str] = None
     node_ckpt: Optional[List[str]] = None
     node_map: Optional[List[dict]] = None
-
 @dataclass
 class LogConfig:
     """ Parameters for logging and saving """

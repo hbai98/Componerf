@@ -11,3 +11,5 @@ CUDA_VISIBLE_DEVICES=5 python scripts/train_compo_nerf.py --config_path demo_con
 CUDA_VISIBLE_DEVICES=6 python scripts/train_compo_nerf.py --config_path demo_configs/compo_nerf/whale.yaml
 CUDA_VISIBLE_DEVICES=7 python scripts/train_compo_nerf.py --config_path demo_configs/compo_nerf/tesla.yaml
 CUDA_VISIBLE_DEVICES=4 python scripts/train_compo_nerf.py --config_path demo_configs/compo_nerf/vase_flower.yaml
+
+CUDA_VISIBLE_DEVICES=4 python train.py --config_path abls_configs/compo_nerf/tabel_wine.yaml

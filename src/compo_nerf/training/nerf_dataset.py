@@ -162,9 +162,8 @@ class NeRFDataset:
             # circle pose
             phi = (index[0] / self.size) * 360
             theta = 60
-            poses, dirs = circle_poses(self.device, radius=self.test_radius_range[0] * 2.8, theta=theta, phi=phi,
+            poses, dirs = circle_poses(self.device, radius=self.test_radius_range[0] * 2.8, theta=theta, phi=phi, return_dirs=True,
                                        angle_overhead=self.cfg.angle_overhead, angle_front=self.cfg.angle_front)
-
             # fixed focal
             fov = (self.fovy_range[1] + self.fovy_range[0]) / 2
             focal = self.H / (2 * np.tan(np.deg2rad(fov) / 2))

@@ -239,7 +239,7 @@ class StableDiffusion(nn.Module):
             Ds = self.denoise(zs, chosen_x, text_embeddings)
             grad = (Ds - latents) / chosen_x
             grad = grad.mean(0, keepdim=True)
-
+        
         latents.backward(-grad, retain_graph=True)
 
 

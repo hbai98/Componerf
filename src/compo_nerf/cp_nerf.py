@@ -54,22 +54,31 @@ class CompoNeRF(nn.Module):
             self.global_color = nn.Parameter(th.tensor(1e-3))
             self.global_color_direction = nn.Parameter(th.tensor(1e-3))
         self.writer = writer
-
-        if self.use_global_loss:
-            if self.use_global_albedo or self.use_global_density:
-                self.encoder_o, self.in_dim_o = get_encoder('tiledgrid', input_dim=3,
-                                                            desired_resolution=2048 * self.bound)
-                self.encoder_d, self.in_dim_d = get_encoder('frequency', input_dim=3)
-                # (directions + positions)
-                if self.use_global_albedo:
-                    self.global_albedo_net = MLP(self.in_dim_d, 4, hidden_dim, self.num_layers, bias=True,
-                                                 res=self.with_mlp_residual)
-                if self.use_global_density:
-                    self.global_density_net = MLP(self.in_dim_o, 4 + additional_dim_size, hidden_dim, self.num_layers,
-                                                  bias=True, res=self.with_mlp_residual)
-                if not self.use_global_density and self.use_global_albedo:
-                    self.global_albedo_net = MLP(self.in_dim_d + self.in_dim_o, 4, hidden_dim, self.num_layers,
-                                                 bias=True, res=self.with_mlp_residual)
+        # if local box only for rendering
+        if self.cfg.optim.iters == self.cfg.optim.local_iters:
+            self.use_global_loss = False
+        
+        # if self.use_global_loss:
+        # global should always be constructed no matter whether global loss is applied. 
+        if self.use_global_albedo or self.use_global_density:
+            self.encoder_o, self.in_dim_o = get_encoder('tiledgrid', input_dim=3,
+                                                        desired_resolution=2048 * self.bound)
+            self.encoder_d, self.in_dim_d = get_encoder('frequency', input_dim=3)
+            # (directions + positions)
+            if self.use_global_albedo:
+                self.global_albedo_net = MLP(self.in_dim_d, 4, hidden_dim, self.num_layers, bias=True,
+                                                res=self.with_mlp_residual)
+            if self.use_global_density:
+                self.global_density_net = MLP(self.in_dim_o, 4 + additional_dim_size, hidden_dim, self.num_layers,
+                                                bias=True, res=self.with_mlp_residual)
+            if not self.use_global_density and self.use_global_albedo:
+                self.global_albedo_net = MLP(self.in_dim_d + self.in_dim_o, 4, hidden_dim, self.num_layers,
+                                                bias=True, res=self.with_mlp_residual)
+        
+        nbox = len(cfg.guide.node_text_list)
+        # learnable positions
+        if len(self.cfg.guide.node_text_list) == 0:
+            self.poses = nn.Parameter()
         self.init_nodes(cfg.guide)
 
     def gaussian(self, x):
@@ -144,6 +153,7 @@ class CompoNeRF(nn.Module):
         sub_text_list = cfg.node_text_list  # ['red apple', 'yellow apple'],
         pose_list = [torch.tensor(pos) for pos in cfg.node_pos_list]
         dim_list = [torch.tensor(dim) for dim in cfg.node_dim_list]
+ 
         poses = th.stack(pose_list)
         dims = th.stack(dim_list)
         poses_ = poses.clone()
@@ -193,7 +203,7 @@ class CompoNeRF(nn.Module):
         self._last_all_obj_properties = None
 
     def _get_obj_properties(self, ):
-        """Get all objectt nodes properties.
+        """Get all object nodes properties.
 
         Returns:
             res: a batch of object info [N_obj, (pose, theta_y, dim, id_c, id_o)] with 'nan' representing the miss. 
@@ -609,7 +619,7 @@ class CompoNeRF(nn.Module):
         delta = H * W - len(rays_idx_w)
         rays_idx_w = F.pad(rays_idx_w, (0, 0, 0, delta))
         rgbs_w, sigmas_w = self.global_forward(xyzs_w, dirs_w, rgbs_w, sigmas_w, with_residual=self.with_residual,
-                                               step=step)
+                                            step=step)
         # update the global rgbs_w based on the global ray positions
         weights_sum, depth, image = composite_rays_train(
             sigmas_w, rgbs_w, deltas_w, rays_idx_w)
@@ -643,19 +653,14 @@ class CompoNeRF(nn.Module):
         rays_o, rays_d = data['rays_o'], data['rays_d']
 
         B, N = rays_o.shape[:2]
-        H, W = data['H'], data['W']
-        if self.cfg.optim.start_shading_iter is None or self.train_step < self.cfg.optim.start_shading_iter:
-            shading = 'albedo'
-            ambient_ratio = 1.0
-        else:
-            shading = 'lambertian'
-            ambient_ratio = 0.1
-        # Will be used if bg_radius <= 0
-        bg_color = torch.rand((B * N, 3), device=rays_o.device)
+        ambient_ratio = kwargs['ambient_ratio']
+        bg_color = kwargs['bg_color']
+        shading = kwargs['shading']
+        force_all_rays = kwargs['force_all_rays']
 
         for i, (idx, node) in enumerate(self.dict_id2classnode.items()):
             outputs = node.render(rays_o.clone(), rays_d.clone(), staged=False, perturb=True, bg_color=bg_color,
-                                  ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True)
+                                  ambient_ratio=ambient_ratio, shading=shading, force_all_rays=force_all_rays)
             render_res = dict(
                 xyzs=outputs['xyzs'],
                 sigmas=outputs['sigmas'],
@@ -663,12 +668,12 @@ class CompoNeRF(nn.Module):
                 ws=outputs['weights_sum'],
                 rays=None
             )
-            loss = node.get_single_node_losses(
+            res = node.get_single_node_losses(
                 (data['dir'], B, data['H'], data['W']),
                 self.diffusion, render_res, crop=False)
-            results[f'local_{i}_image'] = loss[0]
-            results[f'local_{i}_ws'] = loss[1]
-            results[f'local_{i}_losses'] = loss[2]
+            results[f'local_{i}_image'] = res[0]
+            results[f'local_{i}_ws'] = res[1]
+            results[f'local_{i}_losses'] = res[2]
         local_losses = 0
         for key in results.keys():
             if 'loss' in key:
@@ -767,6 +772,7 @@ class ClassNode(nn.Module):
 
         if self.cfg.guide.append_direction:
             dirs = data[0]  # [B,]
+            # test dataset no direction
             text_z = self.text_z[dirs]
         else:
             text_z = self.text_z

@@ -54,6 +54,7 @@ class Trainer:
             self.load_node_checkpoint(self.cfg.optim.node_ckpt,
                                       self.cfg.optim.node_map)
         # self.writer = SummaryWriter()
+        self.local_only = self.cfg.optim.iters == self.cfg.optim.local_iters
         logger.info(f'Successfully initialized {self.cfg.log.exp_name}')
 
     def init_compo_nerf(self):
@@ -206,7 +207,7 @@ class Trainer:
             with torch.cuda.amp.autocast(enabled=self.cfg.optim.fp16):
                 # preds, preds_depth, preds_normals = self.eval_render(data)
                 with torch.no_grad():
-                    preds = self.eval_render(data)
+                    preds = self.eval_render(data, local=self.local_only)
                 if preds is None:
                     continue
             # pred, pred_depth, pred_normals = tensor2numpy(preds[0]), tensor2numpy(preds_depth[0]), tensor2numpy(
@@ -290,7 +291,7 @@ class Trainer:
         im = Image.fromarray(rearrange((img.detach().cpu().numpy() * 255).astype(np.uint8), '(H W) -> H W', H=64))
         im.save(name)
 
-    def eval_render(self, data, bg_color=None, perturb=False):
+    def eval_render(self, data, bg_color=None, perturb=False, local=False):
         rays_o = data['rays_o']  # [B, N, 3]
         rays_d = data['rays_d']  # [B, N, 3]
         pred_results = {}
@@ -305,9 +306,11 @@ class Trainer:
         shading = data['shading'] if 'shading' in data else 'albedo'
         ambient_ratio = data['ambient_ratio'] if 'ambient_ratio' in data else 1.0
         light_d = data['light_d'] if 'light_d' in data else None
+
+        # if local is true, which means no global mlp is trained, and global forward should not be used. 
         outputs = self.nerf.render(data, perturb=perturb, light_d=light_d,
-                                   ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True,
-                                   bg_color=bg_color)
+                                    ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True,
+                                    bg_color=bg_color)
         if outputs is not None:
             for key in outputs.keys():
                 if 'weights_sum' in key or 'ws' in key:
