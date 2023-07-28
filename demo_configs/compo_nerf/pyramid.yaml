@@ -1,0 +1,16 @@
+log:
+  exp_name: 'Sphinx'
+  save_interval: 1000
+guide:
+  sjc: True
+  text: 'The Great Sphinx of Giza situated near the Great Pyramid in the desert'
+  node_text_list: ['The Great Sphinx of Giza', 'the Great Pyramid', 'desert']
+  node_pos_list: [[-0.3, -0.3, 0.2], [0.3, 0.3, 0.2],[0,0,-0.2]]
+  node_dim_list: [[0.8, 0.4, 0.8], [0.6, 0.6, 0.6],[1.2,1.2,0.2]]
+  num_layers: 6
+  box_scale: 0.7
+optim:
+  iters: 12000
+  resume: True
+render:
+  nerf_type: 'latent'

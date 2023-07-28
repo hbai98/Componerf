@@ -1,0 +1,24 @@
+log:
+  exp_name: 'teddy_monkey'
+  save_interval: 1000
+guide:
+  sjc: True
+  text: 'A teddy bear and a stuffed monkey sit side by side.'
+  node_text_list: ['A teddy bear', 'a stuffed monkey']
+  node_pos_list: [[0, 0, 0], [1, 0, 0]]
+  node_dim_list: [[2, 2, 2], [2, 2, 2]]
+  box_scale: 0.6
+  num_layers: 6
+optim:
+  iters: 5000
+  local_iters: 0
+  lambda_global: 100
+  lambda_local: 50
+  lambda_shape: 5e-3
+  lambda_sparsity: 5e-4
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+
+
