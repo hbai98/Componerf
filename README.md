@@ -41,6 +41,11 @@ To create such results, run the `train_compo_nerf` script. Parameters are handle
 
 ## Getting Started
 
+```
+conda create -n componerf python=3.9 -y
+conda activate componerf
+python -m pip install --upgrade pip
+```
 
 ### Installation :floppy_disk:	
 Install the common dependencies from the `requirements.txt` file
@@ -54,8 +59,18 @@ For more details about installation and pre-trained diffusion models, please ref
 ### Training :weight_lifting:	
 
 Scripts for training are available in the `scripts/` folder, see above or in the `demo_configs/` for some actual examples. 
+```
+export CONFIG_FILE=demo_configs/compo_nerf/tabel_wine.yaml
+export GPUs=0
 
+CUDA_VISIBLE_DEVICES=$GPUs,
+python train.py \
+    --config_path $CONFIG_FILE
+```
 
+Note that you also need a :hugs: token for StableDiffusion. First accept conditions for the model you want to use, default one is [`CompVis/stable-diffusion-v1-4`]( https://huggingface.co/CompVis/stable-diffusion-v1-4). Then, add a TOKEN file(./TOKEN) [access token](https://huggingface.co/settings/tokens) to the root folder of this project, or use the `huggingface-cli login` command
+
+If error ("HTTPSConnectionPool(host='huggingface.co', port=443)), please refer to the [issue](https://github.com/huggingface/transformers/issues/17611#issuecomment-1323272726).
 ### Additional Tips and Tricks:	
 
 * Check out the `vis/train` to see the actual rendering used during the optimization.
