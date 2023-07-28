@@ -71,6 +71,10 @@ python train.py \
 Note that you also need a :hugs: token for StableDiffusion. First accept conditions for the model you want to use, default one is [`CompVis/stable-diffusion-v1-4`]( https://huggingface.co/CompVis/stable-diffusion-v1-4). Then, add a TOKEN file(./TOKEN) [access token](https://huggingface.co/settings/tokens) to the root folder of this project, or use the `huggingface-cli login` command
 
 If error ("HTTPSConnectionPool(host='huggingface.co', port=443)), please refer to the [issue](https://github.com/huggingface/transformers/issues/17611#issuecomment-1323272726).
+
+```
+pip install --upgrade requests==2.27.1
+```
 ### Additional Tips and Tricks:	
 
 * Check out the `vis/train` to see the actual rendering used during the optimization.

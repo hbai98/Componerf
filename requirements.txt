@@ -22,4 +22,3 @@ regex
 git+https://github.com/openai/CLIP.git
 tensorboard
 libigl
-requests==2.27.1
