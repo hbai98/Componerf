@@ -9,6 +9,7 @@
 
 nvidia-smi
 source activate
+conda activate componerf
 module load cuda-11.4
 
 
