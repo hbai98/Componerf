@@ -14,7 +14,6 @@ from tqdm import tqdm
 
 from src import utils
 from src.compo_nerf.configs.train_config import TrainConfig
-from src.latent_nerf.models.renderer import NeRFRenderer
 from src.compo_nerf.training.nerf_dataset import NeRFDataset
 from src.stable_diffusion import StableDiffusion
 from src.utils import make_path, tensor2numpy

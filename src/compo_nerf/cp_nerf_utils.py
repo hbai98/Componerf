@@ -481,7 +481,7 @@ def normalize_bound(bound, poses, dims, box_scale=0.8):
     assert th.all(dims > 0), 'The dimension should be positive values'
     # move the group obj to the center 
     shift_g = th.zeros(B) - th.mean(poses.T, dim=-1)
-    poses += shift_g
+    poses = poses + shift_g
 
     b_u = poses + 0.5 * dims
     b_l = poses - 0.5 * dims
@@ -490,9 +490,9 @@ def normalize_bound(bound, poses, dims, box_scale=0.8):
     # scale the max boundary of the bounding-box group   
     max_dim = th.max(delta)
     scale = 2 * bound * box_scale / max_dim
-    dims *= scale
+    dims = dims*scale
     # scale the relative positions
-    poses *= scale
+    poses = poses*scale
     # inverse y and z [Might be some bug]
     # poses_ = poses.clone()
     # poses_[:, 1] = poses[:, -1]
