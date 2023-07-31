@@ -1,3 +1,18 @@
+#!/bin/sh		
+#BSUB -J nerf
+#BSUB -n 4     
+#BSUB -q gpu         
+#BSUB -gpgpu 1
+#BSUB -o out.%J      
+#BSUB -e err.%J  
+#BSUB -W 48:00
+
+nvidia-smi
+source activate
+module load cuda-11.4
+
+
+
 #CUDA_VISIBLE_DEVICES=4 python scripts/train_compo_nerf.py --config_path demo_configs/compo_nerf/apple_and_banana.yaml
 #CUDA_VISIBLE_DEVICES=5 python scripts/train_compo_nerf.py --config_path demo_configs/compo_nerf/bed_room.yaml
 #CUDA_VISIBLE_DEVICES=6 python scripts/train_compo_nerf.py --config_path demo_configs/compo_nerf/chess.yaml
