@@ -81,10 +81,10 @@ class CompoNeRF(nn.Module):
         self.dim_encoder = None
         # learnable positions
         if len(self.cfg.guide.node_pos_list) == 0:
-            self.pos_encoder = MLP(3, hidden_dim, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
+            self.pos_encoder = MLP(3, hidden_dim//2, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.poses = nn.Parameter(torch.zeros(nbox, 3), requires_grad=True)
         if len(self.cfg.guide.node_dim_list) == 0:
-            self.dim_encoder = MLP(3, hidden_dim, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
+            self.dim_encoder = MLP(3, hidden_dim//2, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.dims = nn.Parameter(torch.ones(nbox, 3), requires_grad=True)
         self.init_nodes(cfg.guide)
 
@@ -258,6 +258,15 @@ class CompoNeRF(nn.Module):
             all_params.append([
                 {'params': [self.global_sigma, self.global_color, self.global_color_direction], 'lr': lr},
             ])
+        # add params for learnable pos & dim
+        if self.poses is not None:
+            all_params.append([
+                {'params': self.poses, 'lr': lr*1e-3},
+            ])
+        if self.dims is not None:
+            all_params.append([
+                {'params': self.dims, 'lr': lr*1e-3},
+            ])
         params = []
         for p in all_params:
             params += p
@@ -364,7 +373,6 @@ class CompoNeRF(nn.Module):
         # ------------------------------------------------------
         # local rendering
         # encode pos & dim if learnable
-        
         h = None 
         if self.poses is not None:
             h = self.pos_encoder(self.poses)
