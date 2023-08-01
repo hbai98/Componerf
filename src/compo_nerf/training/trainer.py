@@ -61,7 +61,7 @@ class Trainer:
             from src.latent_nerf.models.network_grid import NeRFNetwork
         else:
             raise ValueError(f'{self.cfg.render.backbone} is not a valid backbone name')
-        from src.compo_nerf.cp_nerf import CompoNeRF
+        from src.compo_nerf import CompoNeRF
         model = CompoNeRF(self.cfg, diffusion=self.diffusion, writer=self.writer).to(self.device)
         logger.info(
             f'Loaded {self.cfg.render.backbone} NeRF, #parameters: {sum([p.numel() for p in model.parameters() if p.requires_grad])}')
