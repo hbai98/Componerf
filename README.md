@@ -48,6 +48,7 @@ python -m pip install --upgrade pip
 ```
 
 ### Installation :floppy_disk:	
+Please refer to [Pytorch](https://pytorch.org/) for customized installation. 
 Install the common dependencies from the `requirements.txt` file
 ```bash
 pip install -r requirements.txt
