@@ -47,6 +47,9 @@ class CompoNeRF(nn.Module):
         self.prompt = cfg.guide.text
         self.num_layers = cfg.guide.num_layers
         self.use_params = cfg.guide.use_hyper_params
+        self.use_learnable_pos_dim = self.cfg.guide.use_learnable_pos_dim
+        self.use_cond_subtext = self.cfg.guide.use_cond_subtext
+        
         self.text_z = self.calc_text_embeddings(self.prompt)
         if self.use_params:
             self.global_sigma = nn.Parameter(th.tensor(1e-3))
@@ -80,10 +83,10 @@ class CompoNeRF(nn.Module):
         self.pos_encoder = None
         self.dim_encoder = None
         # learnable positions
-        if self.cfg.guide.use_learnable_pos_dim or len(self.cfg.guide.node_pos_list) == 0:
+        if self.use_learnable_pos_dim or len(self.cfg.guide.node_pos_list) == 0:
             self.pos_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.poses = nn.Parameter(torch.zeros(nbox, 3), requires_grad=True)
-        if self.cfg.guide.use_learnable_pos_dim or len(self.cfg.guide.node_dim_list) == 0:
+        if self.use_learnable_pos_dim or len(self.cfg.guide.node_dim_list) == 0:
             self.dim_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.dims = nn.Parameter(torch.ones(nbox, 3), requires_grad=True)
         
@@ -158,7 +161,7 @@ class CompoNeRF(nn.Module):
     def init_nodes(self, cfg):
         sub_text_list = cfg.node_text_list  # ['red apple', 'yellow apple'],
         
-        if self.poses is None:
+        if len(cfg.node_pos_list)!=0:
             pose_list = [torch.tensor(pos) for pos in cfg.node_pos_list]
             poses = th.stack(pose_list)
             poses_ = poses.clone()
@@ -168,7 +171,7 @@ class CompoNeRF(nn.Module):
         else:
             poses = self.poses.data
         
-        if self.dims is None:   
+        if len(cfg.node_dim_list)!=0: 
             dim_list = [torch.tensor(dim) for dim in cfg.node_dim_list]
             dims = th.stack(dim_list)
             dims_ = dims.clone()
