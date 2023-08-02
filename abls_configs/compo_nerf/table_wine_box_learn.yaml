@@ -8,7 +8,7 @@ guide:
   node_pos_list: []
   node_dim_list: []
   box_scale: 0.6
-  num_layers: 6
+  num_layers: 3
   use_global_density: True
 optim:
   iters: 8000

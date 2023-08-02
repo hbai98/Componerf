@@ -80,15 +80,12 @@ class CompoNeRF(nn.Module):
         self.pos_encoder = None
         self.dim_encoder = None
         # learnable positions
-        if len(self.cfg.guide.node_pos_list) == 0:
+        if self.cfg.guide.use_learnable_pos_dim or len(self.cfg.guide.node_pos_list) == 0:
             self.pos_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.poses = nn.Parameter(torch.zeros(nbox, 3), requires_grad=True)
-        if len(self.cfg.guide.node_dim_list) == 0:
+        if self.cfg.guide.use_learnable_pos_dim or len(self.cfg.guide.node_dim_list) == 0:
             self.dim_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.dims = nn.Parameter(torch.ones(nbox, 3), requires_grad=True)
-        
-        if self.poses is not None or self.dims is not None:
-            self.layout_decoder = MLP(hidden_dim, 64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
         
         self.init_nodes(cfg.guide)
 
@@ -735,6 +732,7 @@ class CompoNeRF(nn.Module):
             h = self.pos_encoder(self.poses)
         if self.dims is not None:
             h = h + self.dim_encoder(self.dims)
+        
         h = h.mean(dim=0) # object number dimension is eliminated
         
         if crop:
