@@ -55,13 +55,11 @@ class NeRFNetwork(NeRFRenderer):
 
         return g
 
-    def common_forward(self, x, res=None):
+    def common_forward(self, x):
         # x: [N, 3], in [-bound, bound]
 
         # sigma
         h = self.encoder(x, bound=self.bound)
-        if res is not None:
-            h = h + res
         h = self.sigma_net(h)
 
         sigma = trunc_exp(h[..., 0] + self.gaussian(x))
@@ -106,13 +104,13 @@ class NeRFNetwork(NeRFRenderer):
 
         if shading == 'albedo':
             # no need to query normal
-            sigma, color = self.common_forward(x, res=res)
+            sigma, color = self.common_forward(x) 
             normal = None
 
         else:
             # query normal
 
-            sigma, albedo = self.common_forward(x, res=res)
+            sigma, albedo = self.common_forward(x)
             normal = self.finite_difference_normal(x)
 
             # normalize...

@@ -2,7 +2,7 @@ from huggingface_hub import hf_hub_download
 from torchvision import transforms
 from transformers import CLIPTextModel, CLIPTokenizer, CLIPVisionModel,logging,CLIPProcessor
 from diffusers import AutoencoderKL, UNet2DConditionModel, PNDMScheduler
-
+from einops import rearrange
 # suppress partial model loading warning
 logging.set_verbosity_error()
 
@@ -182,7 +182,7 @@ class StableDiffusion(nn.Module):
         us = us[::-1]
         return us
 
-    def train_step_sjc(self, text_embeddings, inputs, guidance_scale=100):
+    def train_step_sjc(self, text_embeddings, inputs, guidance_scale=100, res_latent=None):
 
         # interp to 512x512 to be fed into vae.
         # _t = time.time()
@@ -229,6 +229,12 @@ class StableDiffusion(nn.Module):
         # _t = time.time()
         # latents.backward(gradient=grad, retain_graph=True)
         # torch.cuda.synchronize(); print(f'[TIME] guiding: backward {time.time() - _t:.4f}s')
+        
+        if res_latent is not None:
+            B, C, H, W = latents.shape
+            res_latent = rearrange(res_latent, '(C H W) -> C H W', C=C, H=H)
+            latents = latents + res_latent
+            
         with torch.no_grad():
             chosen_x = np.random.choice(self.us[30:-10], 1, replace=False)
             chosen_x = chosen_x.reshape(-1, 1, 1, 1)

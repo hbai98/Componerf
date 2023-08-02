@@ -81,11 +81,15 @@ class CompoNeRF(nn.Module):
         self.dim_encoder = None
         # learnable positions
         if len(self.cfg.guide.node_pos_list) == 0:
-            self.pos_encoder = MLP(3, hidden_dim//2, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
+            self.pos_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.poses = nn.Parameter(torch.zeros(nbox, 3), requires_grad=True)
         if len(self.cfg.guide.node_dim_list) == 0:
-            self.dim_encoder = MLP(3, hidden_dim//2, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
+            self.dim_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.dims = nn.Parameter(torch.ones(nbox, 3), requires_grad=True)
+        
+        if self.poses is not None or self.dims is not None:
+            self.layout_decoder = MLP(hidden_dim, 64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
+        
         self.init_nodes(cfg.guide)
 
     def gaussian(self, x):
@@ -154,13 +158,6 @@ class CompoNeRF(nn.Module):
                 text_z.append(self.diffusion.get_text_embeds([text]))
         return text_z
     
-    def update_layout(self):
-        '''
-        Update the dimensions and positions of all local bounding boxes by learnable parameters.  
-        '''
-        
-        
-
     def init_nodes(self, cfg):
         sub_text_list = cfg.node_text_list  # ['red apple', 'yellow apple'],
         
@@ -261,11 +258,11 @@ class CompoNeRF(nn.Module):
         # add params for learnable pos & dim
         if self.poses is not None:
             all_params.append([
-                {'params': self.poses, 'lr': lr*1e-3},
+                {'params': self.poses, 'lr': lr*1e-1},
             ])
         if self.dims is not None:
             all_params.append([
-                {'params': self.dims, 'lr': lr*1e-3},
+                {'params': self.dims, 'lr': lr*1e-1},
             ])
         params = []
         for p in all_params:
@@ -372,12 +369,7 @@ class CompoNeRF(nn.Module):
         rays_idx_w = []
         # ------------------------------------------------------
         # local rendering
-        # encode pos & dim if learnable
-        h = None 
-        if self.poses is not None:
-            h = self.pos_encoder(self.poses)
-        if self.dims is not None:
-            h = h + self.dim_encoder(self.dims)
+
         
         # use local indexes to infer each ray in the local bounding boxes
         for i, (cid, node) in enumerate(self.dict_id2classnode.items()):
@@ -443,7 +435,7 @@ class CompoNeRF(nn.Module):
             _nerf = nerf(
                 xyzs_o,
                 dirs_o,
-                l=light_d, ratio=ambient_ratio, shading=shading, res=h[cid])
+                l=light_d, ratio=ambient_ratio, shading=shading)
             # collect results
             sigmas_w.append(_nerf[0])
             rgbs_w.append(_nerf[1])
@@ -737,13 +729,21 @@ class CompoNeRF(nn.Module):
         pred_rgb = img.reshape(
             B, H, W, -1).permute(0, 3, 1, 2).contiguous()
 
+        # encode pos & dim if learnable
+        h = None 
+        if self.poses is not None:
+            h = self.pos_encoder(self.poses)
+        if self.dims is not None:
+            h = h + self.dim_encoder(self.dims)
+        h = h.mean(dim=0) # object number dimension is eliminated
+        
         if crop:
             pred_rgb = func_crop(img, wIdxes, H, W, square=True)
             pred_rgb = rearrange(pred_rgb, 'H W D -> 1 D H W')
 
         # add bg_color
         if self.sjc:
-            loss_guidance = self.diffusion.train_step_sjc(text_z, pred_rgb)
+            loss_guidance = self.diffusion.train_step_sjc(text_z, pred_rgb, res_latent=h)
         else:
             loss_guidance = self.diffusion.train_step(
                 text_z, pred_rgb, guidance_scale=self.cfg.optim.lambda_global)
