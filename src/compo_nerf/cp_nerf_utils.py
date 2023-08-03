@@ -477,10 +477,11 @@ def normalize_bound(bound, poses, dims, box_scale=0.8):
     assert box_scale > 0 and box_scale <= 1, 'Box scale is not valid.'
     # poses = th.stack(poses)
     # dims = th.stack(dims)
+    device = poses.device
     B = poses.size(1)
     assert th.all(dims > 0), 'The dimension should be positive values'
     # move the group obj to the center 
-    shift_g = th.zeros(B) - th.mean(poses.T, dim=-1)
+    shift_g = th.zeros(B).to(device) - th.mean(poses.T, dim=-1)
     poses = poses + shift_g
 
     b_u = poses + 0.5 * dims

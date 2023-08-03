@@ -55,7 +55,7 @@ pip install -r requirements.txt
 ```
 
 For more details about installation and pre-trained diffusion models, please refer to the installation of [Latent-NeRF](https://github.com/eladrich/latent-nerf#installation-floppy_disk)
-
+_
 
 ### Training :weight_lifting:	
 

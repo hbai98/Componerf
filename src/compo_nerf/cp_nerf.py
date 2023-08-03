@@ -48,7 +48,7 @@ class CompoNeRF(nn.Module):
         self.num_layers = cfg.guide.num_layers
         self.use_params = cfg.guide.use_hyper_params
         self.use_learnable_pos_dim = self.cfg.guide.use_learnable_pos_dim
-        self.use_cond_subtext = self.cfg.guide.use_cond_subtext
+        self.use_cond_sublatent = self.cfg.guide.use_cond_sublatent
         
         self.text_z = self.calc_text_embeddings(self.prompt)
         if self.use_params:
@@ -222,16 +222,34 @@ class CompoNeRF(nn.Module):
         Returns:
             res: a batch of object info [N_obj, (pose, theta_y, dim, id_c, id_o)] with 'nan' representing the miss. 
         """
+        poses = None
+        dims = None
+        device = self.device
+        # get all poses or all dims in advance
+        if self.poses is not None or self.dims is not None:
+            poses = []
+            dims = []
+            for id_c, c_node in self.dict_id2classnode.items():
+                poses.append(c_node.pose)
+                dims.append(c_node.dim)
+            poses = torch.stack(poses).to(device)
+            dims = torch.stack(dims).to(device)
+            
         r = []
-        
-        
         for id_c, c_node in self.dict_id2classnode.items():
             info = []
+            if self.poses is not None:
+                poses = self.poses.data
+            if self.dims is not None:
+                dims = self.dims.data
+            # rescale bounds
+            if self.poses is not None or self.dims is not None:
+                poses, dims = normalize_bound(self.bound, poses, dims, box_scale=self.box_scale)
             # learnable 
             if self.poses is not None:
-                c_node.pose = self.poses.data[id_c]
+                c_node.pose = poses[id_c]
             if self.dims is not None:
-                c_node.dim = self.dims.data[id_c]
+                c_node.dim = dims[id_c]
                                 
             info.append(c_node.pose) if c_node.pose is not None \
                 else info.append(th.tensor(float('nan')).to(self.device))
@@ -258,11 +276,11 @@ class CompoNeRF(nn.Module):
         # add params for learnable pos & dim
         if self.poses is not None:
             all_params.append([
-                {'params': self.poses, 'lr': lr*1e-1},
+                {'params': self.poses, 'lr': lr},
             ])
         if self.dims is not None:
             all_params.append([
-                {'params': self.dims, 'lr': lr*1e-1},
+                {'params': self.dims, 'lr': lr},
             ])
         params = []
         for p in all_params:
@@ -480,7 +498,8 @@ class CompoNeRF(nn.Module):
                 ws=_ray_train['ws'],
                 wIdxes=intersection_map[:,
                        0][intersection_map[:, 1] == cid],
-                rays_shift_indx=_ray_train['rays_shift_indx'])
+                rays_shift_indx=_ray_train['rays_shift_indx'],
+                cid=cid)
             if self.training:
                 _, _, _losses = node.get_single_node_losses(
                     (data['dir'], B, data['H'], data['W']),
@@ -489,7 +508,8 @@ class CompoNeRF(nn.Module):
                     intermediate_results,
                     crop=self.train_with_crop,
                     compact=False,
-                    use_local_loss=self.use_local_loss
+                    use_local_loss=self.use_local_loss,
+                    use_cond_sublatent=self.use_cond_sublatent
                 )
                 local_losses.append(_losses)
             image = image.reshape(
@@ -735,7 +755,14 @@ class CompoNeRF(nn.Module):
             h = self.pos_encoder(self.poses)
         if self.dims is not None:
             h = h + self.dim_encoder(self.dims)
-        
+        if self.use_cond_sublatent:
+            # collect all latents in local boxes
+            latents = []
+            for id_c, c_node in self.dict_id2classnode.items():
+                latents.append(c_node.latent_img)
+            latents = torch.stack(latents)   
+            latents = rearrange(latents, 'n 1 C H W -> n (C H W)')
+            h = h + latents
         h = h.mean(dim=0) # object number dimension is eliminated
         
         if crop:
@@ -778,6 +805,9 @@ class ClassNode(nn.Module):
         self.pose = pose
         self.theta_y = theta_y
         self.dim = dim
+        
+        # temporary values
+        self.latent_img = None
 
     def transform(self, mat_trans):
         pass
@@ -787,7 +817,7 @@ class ClassNode(nn.Module):
 
     # TODO : Add object specifically
     def get_single_node_losses(self, data, diffusion, intermediate_results,
-                               crop=False, compact=False, use_local_loss=True):
+                               crop=False, compact=False, use_local_loss=True, use_cond_sublatent=False):
         # intermediate results: ['xyzs', 'sigmas', 'image', 'weights_sum']
         # data:['dir', 'B', 'H', 'W',] -> H, W is the orignal feature map sizes
         B, H, W = data[1:]
@@ -795,6 +825,7 @@ class ClassNode(nn.Module):
         sigmas = intermediate_results['sigmas']
         img = intermediate_results['img']
         ws = intermediate_results['ws']
+        cid = intermediate_results['cid'] 
         if crop:
             wIdxes = intermediate_results['wIdxes']  # wo
             rays_shift_indx = intermediate_results['rays_shift_indx']
@@ -803,8 +834,11 @@ class ClassNode(nn.Module):
         full_ws = ws
 
         pred_rgb = full_img.reshape(
-            B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+            B, H, W, -1).permute(0, 3, 1, 2).contiguous() # this is latent 
         pred_ws = full_ws.reshape(B, 1, H, W)
+        
+        if use_cond_sublatent:
+            self.latent_img = pred_rgb
 
         if crop:
             assert B == 1
@@ -821,6 +855,7 @@ class ClassNode(nn.Module):
             text_z = self.text_z
 
         losses = 0
+
         if use_local_loss:
             if self.sjc:
                 losses += diffusion.train_step_sjc(text_z, pred_rgb)

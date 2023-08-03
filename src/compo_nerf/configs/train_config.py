@@ -21,7 +21,7 @@ class GuideConfig:
     use_local_loss: bool = True
     use_hyper_params: bool = False
     use_learnable_pos_dim: bool = True
-    use_cond_subtext: bool = True # use_learnable_pos_dim -> add latent subtexts
+    use_cond_sublatent: bool = True # use_learnable_pos_dim -> add sub_latent 
     # residual in infering global forward
     with_residual: bool = True
     with_mlp_residual: bool = True
