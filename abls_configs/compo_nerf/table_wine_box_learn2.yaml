@@ -1,5 +1,5 @@
 log:
-  exp_name: 'table_wine_all_MLP_6_learnable_sublatent'
+  exp_name: 'table_wine_all_MLP_4_learnable_sublatent'
   save_interval: 1000
 guide:
   sjc: True
@@ -8,7 +8,7 @@ guide:
   node_pos_list: []
   node_dim_list: []
   box_scale: 0.6
-  num_layers: 6
+  num_layers: 4
   use_global_density: False
   use_cond_sublatent: True
 optim:

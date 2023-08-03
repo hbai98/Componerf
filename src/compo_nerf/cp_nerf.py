@@ -82,16 +82,26 @@ class CompoNeRF(nn.Module):
         self.dims = None
         self.pos_encoder = None
         self.dim_encoder = None
+        self.fn_act = torch.sigmoid
         # learnable positions
         if self.use_learnable_pos_dim or len(self.cfg.guide.node_pos_list) == 0:
             self.pos_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
+            # center 
             self.poses = nn.Parameter(torch.zeros(nbox, 3), requires_grad=True)
         if self.use_learnable_pos_dim or len(self.cfg.guide.node_dim_list) == 0:
             self.dim_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
-            self.dims = nn.Parameter(torch.ones(nbox, 3), requires_grad=True)
+            self.dims = nn.Parameter(torch.ones(nbox, 3)*4, requires_grad=True)
         
         self.init_nodes(cfg.guide)
 
+    def get_dims(self):
+        return self.fn_act(self.dims)*self.bound
+    
+    
+    def get_poses(self):
+        return self.fn_act(self.poses)*2*self.bound - self.bound
+    
+    
     def gaussian(self, x):
         # x: [B, N, 3]
         d = (x ** 2).sum(-1)
@@ -169,7 +179,7 @@ class CompoNeRF(nn.Module):
             poses[:, -1] = poses_[:, 1]
             poses[:, 1] = poses_[:, -1]
         else:
-            poses = self.poses.data
+            poses = self.get_poses()
         
         if len(cfg.node_dim_list)!=0: 
             dim_list = [torch.tensor(dim) for dim in cfg.node_dim_list]
@@ -178,7 +188,8 @@ class CompoNeRF(nn.Module):
             dims[:, -1] = dims_[:, 1]
             dims[:, 1] = dims_[:, -1]
         else:
-            dims = self.dims.data
+            dims = self.get_dims()
+            
         # normalize the scale to [-1, 1]
         pose_list, dim_list = normalize_bound(self.bound, poses, dims, box_scale=self.box_scale)
 
@@ -238,11 +249,14 @@ class CompoNeRF(nn.Module):
         r = []
         for id_c, c_node in self.dict_id2classnode.items():
             info = []
+            
+            # no gradients for latter ray tracing. 
             if self.poses is not None:
-                poses = self.poses.data
+                poses = self.get_poses().data
             if self.dims is not None:
-                dims = self.dims.data
-            # rescale bounds
+                dims = self.get_dims().data
+                
+            # rescale bounds by constraints between pose and dims
             if self.poses is not None or self.dims is not None:
                 poses, dims = normalize_bound(self.bound, poses, dims, box_scale=self.box_scale)
             # learnable 
@@ -752,9 +766,9 @@ class CompoNeRF(nn.Module):
         # encode pos & dim if learnable
         h = None 
         if self.poses is not None:
-            h = self.pos_encoder(self.poses)
+            h = self.pos_encoder(self.get_poses())
         if self.dims is not None:
-            h = h + self.dim_encoder(self.dims)
+            h = h + self.dim_encoder(self.get_dims())
         if self.use_cond_sublatent:
             # collect all latents in local boxes
             latents = []
