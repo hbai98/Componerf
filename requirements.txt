@@ -20,3 +20,4 @@ regex
 git+https://github.com/openai/CLIP.git
 tensorboard
 libigl
+scikit-learn

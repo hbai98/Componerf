@@ -13,7 +13,7 @@ from src.compo_nerf.models.encoding import get_encoder
 from src.compo_nerf.models.network_grid import NeRFNetwork
 
 from src.compo_nerf.cp_nerf_utils import box_pts, world2object, get_common_rays, func_crop, normalize_bound
-
+from src.compo_nerf.cp_nerf_utils import sigmoid, inv_poses, split_poses_dims, inv_dims
 from einops import rearrange, repeat
 from itertools import chain
 import torch.nn.functional as F
@@ -50,11 +50,17 @@ class CompoNeRF(nn.Module):
         self.use_learnable_pos_dim = self.cfg.guide.use_learnable_pos_dim
         self.use_cond_sublatent = self.cfg.guide.use_cond_sublatent
         
+        self.global_weight = self.cfg.guide.global_weight
+        
         self.text_z = self.calc_text_embeddings(self.prompt)
         if self.use_params:
-            self.global_sigma = nn.Parameter(th.tensor(1e-3))
-            self.global_color = nn.Parameter(th.tensor(1e-3))
-            self.global_color_direction = nn.Parameter(th.tensor(1e-3))
+            self.global_sigma = nn.Parameter(th.tensor(1e-2))
+            self.global_color = nn.Parameter(th.tensor(1e-2))
+            self.global_color_direction = nn.Parameter(th.tensor(1e-2))
+            if self.use_learnable_pos_dim:
+                self.pose_weight = nn.Parameter(th.tensor(1e-2))
+            
+            
         self.writer = writer
         # if local box only for rendering
         if self.cfg.optim.iters == self.cfg.optim.local_iters:
@@ -77,30 +83,39 @@ class CompoNeRF(nn.Module):
                 self.global_albedo_net = MLP(self.in_dim_d + self.in_dim_o, 4, hidden_dim, self.num_layers,
                                                 bias=True, res=self.with_mlp_residual)
         
-        nbox = len(cfg.guide.node_text_list)
         self.poses = None
         self.dims = None
         self.pos_encoder = None
         self.dim_encoder = None
-        self.fn_act = torch.sigmoid
+        self.fn_act = sigmoid
+        self.init_poses, self.init_dims = self.init_map()
         # learnable positions
-        if self.use_learnable_pos_dim or len(self.cfg.guide.node_pos_list) == 0:
+        if self.use_learnable_pos_dim:
+            # inverse activation
             self.pos_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
-            # center 
-            self.poses = nn.Parameter(torch.zeros(nbox, 3), requires_grad=True)
-        if self.use_learnable_pos_dim or len(self.cfg.guide.node_dim_list) == 0:
+            self.poses = nn.Parameter(inv_poses(self.init_poses, self.bound), requires_grad=True)
             self.dim_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
-            self.dims = nn.Parameter(torch.ones(nbox, 3)*4, requires_grad=True)
-        
+            self.dims = nn.Parameter(inv_dims(self.init_dims, self.bound), requires_grad=True)
+            #TODO: rotation y 
         self.init_nodes(cfg.guide)
 
+    def init_map(self):
+        """
+        split box positions without box collision (shortest path)
+        """
+        nbox = len(self.cfg.guide.node_text_list)
+        return split_poses_dims(self.bound, nbox)
+
     def get_dims(self):
-        return self.fn_act(self.dims)*self.bound
+        if self.use_learnable_pos_dim:
+            return self.fn_act(self.dims)*self.bound
+        return None
     
     
     def get_poses(self):
-        return self.fn_act(self.poses)*2*self.bound - self.bound
-    
+        if self.use_learnable_pos_dim:
+            return self.fn_act(self.poses)*2*self.bound - self.bound
+        return None
     
     def gaussian(self, x):
         # x: [B, N, 3]
@@ -124,9 +139,9 @@ class CompoNeRF(nn.Module):
                 if self.use_params:
                     density_ = self.global_sigma * h[..., 0] + density  # residual
                 else:
-                    density_ = h[..., 0] + density  # residual
+                    density_ = self.global_weight*h[..., 0] + density  # residual
             else:
-                density_ = h[..., 0]
+                density_ = self.global_weight*h[..., 0]
 
             density = trunc_exp(density_ + self.gaussian(o))
             color = h[..., 1:]
@@ -134,9 +149,9 @@ class CompoNeRF(nn.Module):
             if self.use_global_albedo:
                 h = self.global_albedo_net(h_d)  # [N, 3]
                 if self.use_params:
-                    color = color + self.global_color_direction * h
+                    color = self.global_weight*color + self.global_color_direction * h
                 else:
-                    color = color + h
+                    color = self.global_weight*color + self.global_weight*h
 
         if not self.use_global_density and self.use_global_albedo:
             color = self.global_albedo_net(th.cat([h_o, h_d], dim=-1))
@@ -145,7 +160,7 @@ class CompoNeRF(nn.Module):
             if self.use_params:
                 albedo = albedo + self.global_color * color  # residul
             else:
-                albedo = albedo + color  # residul
+                albedo = albedo + self.global_weight*color  # residul
         else:
             albedo = color
 
@@ -179,7 +194,7 @@ class CompoNeRF(nn.Module):
             poses[:, -1] = poses_[:, 1]
             poses[:, 1] = poses_[:, -1]
         else:
-            poses = self.get_poses()
+            poses = self.init_poses
         
         if len(cfg.node_dim_list)!=0: 
             dim_list = [torch.tensor(dim) for dim in cfg.node_dim_list]
@@ -188,7 +203,7 @@ class CompoNeRF(nn.Module):
             dims[:, -1] = dims_[:, 1]
             dims[:, 1] = dims_[:, -1]
         else:
-            dims = self.get_dims()
+            dims = self.init_dims
             
         # normalize the scale to [-1, 1]
         pose_list, dim_list = normalize_bound(self.bound, poses, dims, box_scale=self.box_scale)
@@ -236,15 +251,6 @@ class CompoNeRF(nn.Module):
         poses = None
         dims = None
         device = self.device
-        # get all poses or all dims in advance
-        if self.poses is not None or self.dims is not None:
-            poses = []
-            dims = []
-            for id_c, c_node in self.dict_id2classnode.items():
-                poses.append(c_node.pose)
-                dims.append(c_node.dim)
-            poses = torch.stack(poses).to(device)
-            dims = torch.stack(dims).to(device)
             
         r = []
         for id_c, c_node in self.dict_id2classnode.items():
@@ -367,9 +373,11 @@ class CompoNeRF(nn.Module):
         theta_ys = th.nan_to_num(theta_ys, ).cuda()
         dims = repeat(dim, 'N d -> B N d', B=N).cuda()
         # ray-box intersections
-        f_w, f_o, intersection_map = box_pts(
+        res = box_pts(
             (rays_o, rays_d), poses, dim=dims, theta_y=theta_ys)
-        
+        if res is None:
+            return None
+        f_w, f_o, intersection_map = res
         rays_o_o, rays_d_o, nears_o, fars_o = f_o  # local frame
         rays_o_w, rays_d_w, nears_w, fars_w = f_w  # world frame
       
@@ -769,15 +777,21 @@ class CompoNeRF(nn.Module):
             h = self.pos_encoder(self.get_poses())
         if self.dims is not None:
             h = h + self.dim_encoder(self.get_dims())
-        if self.use_cond_sublatent:
-            # collect all latents in local boxes
-            latents = []
-            for id_c, c_node in self.dict_id2classnode.items():
-                latents.append(c_node.latent_img)
-            latents = torch.stack(latents)   
-            latents = rearrange(latents, 'n 1 C H W -> n (C H W)')
-            h = h + latents
-        h = h.mean(dim=0) # object number dimension is eliminated
+        if h is not None:
+            if self.use_cond_sublatent:
+                # collect all latents in local boxes
+                latents = []
+                for id_c, c_node in self.dict_id2classnode.items():
+                    latents.append(c_node.latent_img)
+                latents = torch.stack(latents)   
+                latents = rearrange(latents, 'n 1 C H W -> n (C H W)')
+                h = h + latents
+                h = h.mean(dim=0) # object number dimension is eliminated
+            else:
+                h = h.mean(dim=0)
+        
+        if self.use_params:
+            h = h * self.pose_weight
         
         if crop:
             pred_rgb = func_crop(img, wIdxes, H, W, square=True)

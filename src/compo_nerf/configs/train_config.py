@@ -20,13 +20,14 @@ class GuideConfig:
     use_global_density: bool = False
     use_local_loss: bool = True
     use_hyper_params: bool = False
-    use_learnable_pos_dim: bool = True
+    use_learnable_pos_dim: bool = False
     use_cond_sublatent: bool = True # use_learnable_pos_dim -> add sub_latent 
     # residual in infering global forward
     with_residual: bool = True
     with_mlp_residual: bool = True
     # global layer MLP
     num_layers: int = 6
+    global_weight: float = 1e-1 # global rendering latent weights
     # Append direction to text prompts
     append_direction: bool = True
     # A Textual-Inversion concept to use

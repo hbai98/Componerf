@@ -1,5 +1,5 @@
 log:
-  exp_name: 'table_wine_all_MLP_6_eval'
+  exp_name: 'table_wine_all_MLP_4_density'
   save_interval: 1000
   eval_only: False
 guide:
@@ -9,7 +9,8 @@ guide:
   node_pos_list: [[-0.26447, 0.5087, 0.27625], [-0.25545, -0.36888, 0.14814], [0.44915, 0.14557, 0.17127], [0.12505, -0.027665, -0.075758]]
   node_dim_list: [[0.32, 0.32, 0.86], [0.634, 0.684, 0.578], [0.378, 0.6, 0.604], [1.504, 1.504, 0.266]]
   box_scale: 0.6
-  num_layers: 6
+  num_layers: 4
+  use_global_density: True
   use_global_loss: True
 optim:
   iters: 8000

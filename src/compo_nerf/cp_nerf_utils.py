@@ -1,10 +1,11 @@
 import torch.nn as nn
 import numpy as np
 import torch as th
+import torch
 
 from einops import rearrange, repeat
 from numpy import linalg as LA
-
+from sklearn.metrics.pairwise import euclidean_distances
 
 # refer to https://github.com/princeton-computational-imaging/neural-scene-graphs
 
@@ -63,7 +64,9 @@ def box_pts(rays, pose, theta_y=None, dim=None, one_intersec_per_ray=False):
     # Get the intersection with each Bounding Box
     z_ray_in_o, z_ray_out_o, intersection_map = ray_box_intersection(
         rays_o_o, dirs_o)  # z : 1D intersection points
-    # TODO: intersection_map-> None check
+    # intersection_map-> None check
+    if intersection_map is None:
+        return None
     idx_im = (*intersection_map.T,)  # for indexing matrixes
     if z_ray_in_o is not None:
         # Calculate the intersection points for all box in all object frames -> object frames
@@ -472,6 +475,55 @@ def vector_gather(vectors, indices):
         out = out.squeeze(1)
     return out
 
+
+def sigmoid(x):
+    return 1/(1+torch.exp(-x))
+
+def inv_sigmoid(x):
+    return torch.log(x/(1-x))
+
+def inv_dims(x, bound):
+    return inv_sigmoid(x/bound)
+
+def inv_poses(x, bound):
+    return inv_sigmoid((bound + x)/(2*bound))
+
+def split_poses_dims(bound, nbox):
+    # split the space by octree
+    octree_level = torch.log2(torch.tensor(nbox))//8 + 1
+    num_voxel = torch.pow(8, octree_level).int().item()
+    len_voxel = torch.pow(2, octree_level).int().item()
+    start = bound/(2*len_voxel)
+    
+    xs = torch.linspace(start, bound-start, steps=len_voxel)
+    ys = xs.clone()
+    zs = xs.clone()
+    x, y, z = torch.meshgrid(xs, ys, zs)
+    poses = torch.stack([x, y, z])
+    poses = rearrange(poses, 'n x y z -> (x y z) n ')
+    ps_idx = torch.randint(0, num_voxel, (nbox, ))
+    poses = torch.index_select(poses, 0, ps_idx)
+    
+    # avoid colision, calculate the smallest size
+    min_dis = euclidean_distances(poses)
+    min_dis = min_dis[min_dis!=0]
+    min_dis = min_dis.min()
+    min_dis = torch.tensor(min_dis)
+    size = torch.sqrt(torch.pow(min_dis/2, 2)/2)
+    size = size*2
+    dims = torch.ones(nbox, 3)*size
+    poses, dims = normalize_bound(bound, poses, dims)
+    return poses, dims
+
+def get_collision_loss(poses, dims):
+    min_dis = shortest_pair_path(poses)
+    
+
+def shortest_pair_path(poses):
+    from sklearn.metrics.pairwise import euclidean_distances
+    dis = euclidean_distances(poses, poses)
+    min_dis = dis[dis!=0].min()
+    return min_dis
 
 def normalize_bound(bound, poses, dims, box_scale=0.8):
     assert box_scale > 0 and box_scale <= 1, 'Box scale is not valid.'
