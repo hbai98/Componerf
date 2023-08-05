@@ -149,16 +149,16 @@ class CompoNeRF(nn.Module):
             if self.use_global_albedo:
                 h = self.global_albedo_net(h_d)  # [N, 3]
                 if self.use_params:
-                    color = self.global_weight*color + self.global_color_direction * h
+                    color = color + self.global_color_direction*h
                 else:
-                    color = self.global_weight*color + self.global_weight*h
+                    color = color + self.global_weight*h
 
         if not self.use_global_density and self.use_global_albedo:
             color = self.global_albedo_net(th.cat([h_o, h_d], dim=-1))
 
         if with_residual:
             if self.use_params:
-                albedo = albedo + self.global_color * color  # residul
+                albedo = albedo + self.global_color*color  # residul
             else:
                 albedo = albedo + self.global_weight*color  # residul
         else:
@@ -168,6 +168,7 @@ class CompoNeRF(nn.Module):
             self.writer.add_scalar('orig/color', self.global_color, step)
             self.writer.add_scalar('orig/sigma', self.global_sigma, step)
             self.writer.add_scalar('orig/direction', self.global_color_direction, step)
+            self.writer.add_scalar('orig/global', self.global_color_direction, step)
 
         return albedo, density
 

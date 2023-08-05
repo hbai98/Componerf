@@ -1,5 +1,5 @@
 log:
-  exp_name: 'table_wine_all_MLP_4_color_nopose_init'
+  exp_name: 'table_wine_all_MLP_4_density_nopose_init'
   save_interval: 1000
 guide:
   sjc: True
@@ -9,7 +9,7 @@ guide:
   node_dim_list: []
   box_scale: 0.6
   num_layers: 4
-  use_global_density: False
+  use_global_density: True
   use_cond_sublatent: False
   use_learnable_pos_dim: True 
   # global_weight: 1e-1
