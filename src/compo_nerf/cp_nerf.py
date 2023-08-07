@@ -53,12 +53,13 @@ class CompoNeRF(nn.Module):
         self.global_weight = self.cfg.guide.global_weight
         
         self.text_z = self.calc_text_embeddings(self.prompt)
+        self.pose_weight = None
         if self.use_params:
-            self.global_sigma = nn.Parameter(th.tensor(1e-2))
-            self.global_color = nn.Parameter(th.tensor(1e-2))
-            self.global_color_direction = nn.Parameter(th.tensor(1e-2))
+            self.global_sigma = nn.Parameter(th.tensor(1e-1))
+            self.global_color = nn.Parameter(th.tensor(1e-1))
+            self.global_color_direction = nn.Parameter(th.tensor(1e-1))
             if self.use_learnable_pos_dim:
-                self.pose_weight = nn.Parameter(th.tensor(1e-2))
+                self.pose_weight = nn.Parameter(th.tensor(1e0))
             
             
         self.writer = writer
@@ -303,6 +304,10 @@ class CompoNeRF(nn.Module):
             all_params.append([
                 {'params': self.dims, 'lr': lr},
             ])
+        if self.pose_weight is not None:
+            all_params.append([
+                {'params': self.pose_weight, 'lr': lr*1e1},
+            ])            
         params = []
         for p in all_params:
             params += p
@@ -778,20 +783,21 @@ class CompoNeRF(nn.Module):
             h = self.pos_encoder(self.get_poses())
         if self.dims is not None:
             h = h + self.dim_encoder(self.get_dims())
-        if h is not None:
-            if self.use_cond_sublatent:
-                # collect all latents in local boxes
-                latents = []
-                for id_c, c_node in self.dict_id2classnode.items():
-                    latents.append(c_node.latent_img)
-                latents = torch.stack(latents)   
-                latents = rearrange(latents, 'n 1 C H W -> n (C H W)')
+        if self.use_cond_sublatent:
+            # collect all latents in local boxes
+            latents = []
+            for id_c, c_node in self.dict_id2classnode.items():
+                latents.append(c_node.latent_img)
+            latents = torch.stack(latents)   
+            latents = rearrange(latents, 'n 1 C H W -> n (C H W)')
+            if h is not None:
                 h = h + latents
-                h = h.mean(dim=0) # object number dimension is eliminated
             else:
-                h = h.mean(dim=0)
+                h = latents
+        if h is not None:
+            h = h.mean(dim=0) # object number dimension is eliminated
         
-        if self.use_params:
+        if self.use_params and self.use_learnable_pos_dim:
             h = h * self.pose_weight
         
         if crop:
