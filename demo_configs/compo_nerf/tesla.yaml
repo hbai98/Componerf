@@ -6,9 +6,9 @@ guide:
   text: 'a tesla model three is running on the road.'
   node_text_list: ['a tesla model three', ' the road']
   node_pos_list: [[0, 0, 0], [0, 0, -1.8]]
-  node_dim_list: [[4, 2, 3], [5.4, 6, 0.2]]
+  node_dim_list: [[2, 1, 1.5], [2.7, 3, 0.1]]
   box_scale: 0.6
-  num_layers: 6
+  num_layers: 4
 optim:
   iters: 5000
   local_iters: 0

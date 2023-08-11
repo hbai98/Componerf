@@ -7,8 +7,8 @@ guide:
   node_text_list: ['a large monitor', 'a mechanical keyboard', 'gaming mouse', 'noise-cancelling headphones']
   node_pos_list: [[0.74911, -0.499263, 1.88797 ], [3.62748, -0.292284, -0.262944], [6.29444, 3.7789, -0.192133], [1.36114 , 4.08563 , -0.317501]]
   node_dim_list: [[1.69728, 2.50229, 2.72625], [1.35031, 3.54869, 0.405325], [1.06418, 0.723235, 0.666824], [1.92274, 1.71339, 0.716477]]
-  box_scale: 0.8
-  num_layers: 6
+  box_scale: 0.7
+  num_layers: 4
 optim:
   iters: 8000
   local_iters: 0

@@ -6,8 +6,8 @@ guide:
   text: 'a football and a basketball'
   node_text_list: ['a football', 'a basketball']
   node_pos_list: [[-0.4, 0.0, 0.0], [0.4, 0.0, 0.0]]
-  node_dim_list: [[0.8, 0.8, 0.8], [0.8, 0.8, 0.8]]
-  num_layers: 6
+  node_dim_list: [[0.4, 0.4, 0.4], [0.4, 0.4, 0.4]]
+  num_layers: 4
   box_scale: 0.7
 optim:
   iters: 5000

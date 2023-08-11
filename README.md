@@ -73,8 +73,16 @@ Note that you also need a :hugs: token for StableDiffusion. First accept conditi
 
 If error ("HTTPSConnectionPool(host='huggingface.co', port=443)), please refer to the [issue](https://github.com/huggingface/transformers/issues/17611#issuecomment-1323272726).
 
+
 ```
 pip install --upgrade requests==2.27.1
+```
+
+```
+'''This following code will set the CURL_CA_BUNDLE environment variable to an empty string in the Python os module'''
+
+import os
+os.environ['CURL_CA_BUNDLE'] = ''
 ```
 ### Additional Tips and Tricks:	
 

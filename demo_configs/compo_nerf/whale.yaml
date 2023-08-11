@@ -6,7 +6,7 @@ guide:
   text: 'A blue whale is swimming around a iceberg on sea'
   node_text_list: ['a blue whale is swimming', 'iceberg', 'sea surface']
   node_pos_list: [[-0.3, 0.0, -0.1], [0.3, 0.3, 0.2],[0,0,-0.2]]
-  node_dim_list: [[0.8, 0.4, 0.4], [0.6, 0.6, 0.6],[0.8,0.8,0.2]]
+  node_dim_list: [[0.4, 0.2, 0.2], [0.3, 0.3, 0.3],[0.4,0.4,0.1]]
   num_layers: 6
   box_scale: 0.7
 optim:

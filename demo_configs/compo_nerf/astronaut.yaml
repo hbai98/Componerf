@@ -6,7 +6,7 @@ guide:
   text: 'an astronaut is standing on the moon ground.'
   node_text_list: ['an astronaut', 'moon ground']
   node_pos_list: [[0, 0, 0], [0, 0, -1.8]]
-  node_dim_list: [[2, 2, 4], [5.4, 6, 0.2]]
+  node_dim_list: [[1, 1, 2], [2.7, 3, 0.1]]
   box_scale: 0.6
   num_layers: 6
 optim:

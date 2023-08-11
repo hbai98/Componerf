@@ -6,9 +6,9 @@ guide:
   text: 'A bunch of sunflowers in a barnacle encrusted clay vase'
   node_text_list: ['A bunch of sunflowers', 'a clay vase']
   node_pos_list: [[0.0, 0.0, 0.5], [0.0, 0.0, 0.0]]
-  node_dim_list: [[0.6, 0.6, 1.0], [1, 1, 1]]
+  node_dim_list: [[0.3, 0.3, 0.5], [0.5, 0.5, 0.5]]
   box_scale: 0.6
-  num_layers: 6
+  num_layers: 4
 optim:
   iters: 5000
 render:
