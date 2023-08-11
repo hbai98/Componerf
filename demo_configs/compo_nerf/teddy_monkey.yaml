@@ -6,11 +6,11 @@ guide:
   text: 'A teddy bear and a stuffed monkey sit side by side.'
   node_text_list: ['A teddy bear', 'a stuffed monkey']
   node_pos_list: [[0, 0, 0], [1, 0, 0]]
-  node_dim_list: [[2, 2, 2], [2, 2, 2]]
+  node_dim_list: [[1, 1, 1], [1, 1, 1]]
   box_scale: 0.6
   num_layers: 6
 optim:
-  iters: 5000
+  iters: 8000
   local_iters: 0
   lambda_global: 100
   lambda_local: 50

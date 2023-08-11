@@ -10,7 +10,7 @@ guide:
   num_layers: 6
   box_scale: 0.7
 optim:
-  iters: 14000
+  iters: 8000
   resume: True
 render:
   nerf_type: 'latent'

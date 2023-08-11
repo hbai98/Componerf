@@ -89,9 +89,9 @@ class CompoNeRF(nn.Module):
         self.pos_encoder = None
         self.dim_encoder = None
         self.fn_act = sigmoid
-        self.init_poses, self.init_dims = self.init_map()
         # learnable positions
         if self.use_learnable_pos_dim:
+            self.init_poses, self.init_dims = self.init_map()
             # inverse activation
             self.pos_encoder = MLP(3, 4*64*64, hidden_dim, self.num_layers, bias=True, res=self.with_mlp_residual)
             self.poses = nn.Parameter(inv_poses(self.init_poses, self.bound), requires_grad=True)
@@ -190,7 +190,7 @@ class CompoNeRF(nn.Module):
         
         if len(cfg.node_pos_list)!=0:
             pose_list = [torch.tensor(pos) for pos in cfg.node_pos_list]
-            poses = th.stack(pose_list)
+            poses = th.stack(pose_list) 
             poses_ = poses.clone()
             # shift y and z axis
             poses[:, -1] = poses_[:, 1]
@@ -200,7 +200,7 @@ class CompoNeRF(nn.Module):
         
         if len(cfg.node_dim_list)!=0: 
             dim_list = [torch.tensor(dim) for dim in cfg.node_dim_list]
-            dims = th.stack(dim_list)
+            dims = th.stack(dim_list)*self.bound*2 # map with coordinates
             dims_ = dims.clone()
             dims[:, -1] = dims_[:, 1]
             dims[:, 1] = dims_[:, -1]

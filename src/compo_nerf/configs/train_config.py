@@ -17,9 +17,9 @@ class GuideConfig:
     # global color dependent on positions from the world frame
     use_global_albedo: bool = True
     use_global_loss: bool = True
-    use_global_density: bool = False
+    use_global_density: bool = True
     use_local_loss: bool = True
-    use_hyper_params: bool = False
+    use_hyper_params: bool = True
     use_learnable_pos_dim: bool = False
     use_cond_sublatent: bool = False # use_learnable_pos_dim -> add sub_latent 
     # residual in infering global forward

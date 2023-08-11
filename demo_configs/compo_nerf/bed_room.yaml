@@ -3,14 +3,14 @@ log:
   save_interval: 1000
 guide:
   sjc: True
-  text: 'A bed is next to a nightstands where a table lamp on it in a room'
-  node_text_list: ['a bed', 'a nightstands', 'a table lamp']
+  text: 'A bed is next to a nightstand with a table lamp on it in a room'
+  node_text_list: ['a bed', 'a nightstand', 'a table lamp']
   node_pos_list: [[0.0, 0.0, -0.1], [-0.4, -0.2, -0.1], [-0.4, -0.2, 0.1]]
-  node_dim_list: [[0.4, 0.86, 0.32], [0.32, 0.32, 0.32], [0.2, 0.2, 0.4]]
+  node_dim_list: [[0.2, 0.32, 0.16], [0.16, 0.16, 0.16], [0.1, 0.1, 0.2]]
   box_scale: 0.7
-  num_layers: 6
+  num_layers: 4
 optim:
-  iters: 12000
+  iters: 8000
   local_iters: 0
   lambda_global: 100
   lambda_local: 100

@@ -529,13 +529,27 @@ def normalize_bound(bound, poses, dims, box_scale=0.8):
     assert box_scale > 0 and box_scale <= 1, 'Box scale is not valid.'
     # poses = th.stack(poses)
     # dims = th.stack(dims)
+    # normalize poses 
     device = poses.device
-    B = poses.size(1)
+    B = poses.size(1) 
     assert th.all(dims > 0), 'The dimension should be positive values'
     # move the group obj to the center 
-    shift_g = th.zeros(B).to(device) - th.mean(poses.T, dim=-1)
-    poses = poses + shift_g
-
+    
+    
+ 
+    
+    # scale poses to [-bound, bound]
+    poses = poses - rearrange(torch.min(poses, dim=-1)[0], 'N -> N 1')
+    scale = rearrange(torch.max(poses, dim=-1)[0], 'N -> N 1')
+    poses = poses / scale
+    dims = dims / scale 
+    poses = poses*bound*2
+    dims = dims*bound*2
+    poses = poses - bound
+   # to center
+    shift_g = th.zeros(B).to(device) - th.mean(poses.T, dim=-1) 
+    poses = poses + shift_g # [n,3]
+    
     b_u = poses + 0.5 * dims
     b_l = poses - 0.5 * dims
     delta = b_u.T.max(dim=-1)[0] - b_l.T.min(dim=-1)[0]

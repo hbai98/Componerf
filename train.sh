@@ -31,3 +31,9 @@
 # CUDA_VISIBLE_DEVICES=6 python train.py --config_path abls_configs/compo_nerf/table_wine.yaml
 CUDA_VISIBLE_DEVICES=7 python train.py --config_path abls_configs/compo_nerf/table_wine_box_learn.yaml
 CUDA_VISIBLE_DEVICES=6 python train.py --config_path abls_configs/compo_nerf/table_wine_box_learn2.yaml
+
+CUDA_VISIBLE_DEVICES=7 python train.py --config_path demo_configs/compo_nerf/whale.yaml
+CUDA_VISIBLE_DEVICES=6 python train.py --config_path demo_configs/compo_nerf/computer_mouse.yaml
+CUDA_VISIBLE_DEVICES=5 python train.py --config_path demo_configs/compo_nerf/teddy_monkey.yaml
+CUDA_VISIBLE_DEVICES=4 python train.py --config_path demo_configs/compo_nerf/bed_room.yaml
+
