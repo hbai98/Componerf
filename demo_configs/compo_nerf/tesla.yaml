@@ -1,6 +1,7 @@
 log:
-  exp_name: 'tesla'
+  exp_name: 'white_bg_infer/tesla'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'a tesla model three is running on the road.'
@@ -10,8 +11,8 @@ guide:
   box_scale: 0.6
   num_layers: 4
 optim:
-  iters: 5000
-  local_iters: 0
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/tesla/checkpoints/step_008000.pth'
+  iters: 8000
   lambda_global: 100
   lambda_local: 50
   lambda_shape: 5e-3
@@ -21,5 +22,5 @@ render:
   nerf_type: 'latent'
   density_thresh: 10
   density_init: 5e-1
-  test_box_scale: 0.6
+  test_box_scale: 0.5
 

@@ -1,0 +1,26 @@
+log:
+  exp_name: 'white_bg_infer_box/tesla_box0.4'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'a tesla model three is running on the road.'
+  node_text_list: ['a tesla model three', ' the road']
+  node_pos_list: [[0, 0, 0], [0, 0, -1.8]]
+  node_dim_list: [[2, 1, 1.5], [2.7, 3, 0.1]]
+  box_scale: 0.6
+  num_layers: 4
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/tesla/checkpoints/step_008000.pth'
+  iters: 8000
+  lambda_global: 100
+  lambda_local: 50
+  lambda_shape: 5e-3
+  lambda_sparsity: 5e-4
+  resume: True
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.4
+

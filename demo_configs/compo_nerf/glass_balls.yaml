@@ -1,6 +1,7 @@
 log:
-  exp_name: 'glass_ball_base'
+  exp_name: 'white_bg_infer/glass_ball_base'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'Crystal ball, Dichroic glass ball, Murano glass ball, and Solar-powered glass ball are placed on the glass table.'
@@ -10,9 +11,9 @@ guide:
   box_scale: 0.7
   num_layers: 4
 optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/glass_ball_base/checkpoints/step_007000.pth'
   resume: True
-  iters: 15000
-  local_iters: 0
+  iters: 8000
   lambda_global: 100
   lambda_local: 50
   lambda_shape: 5e-3
@@ -21,5 +22,6 @@ render:
   nerf_type: 'latent'
   density_thresh: 10
   density_init: 5e-1
+  test_box_scale: 0.5
 
 

@@ -1,6 +1,7 @@
 log:
-  exp_name: 'football_and_basketball'
+  exp_name: 'white_bg_infer/football_and_basketball'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'a football and a basketball'
@@ -10,7 +11,9 @@ guide:
   num_layers: 4
   box_scale: 0.7
 optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/football_and_basketball/checkpoints/step_005000.pth'
   iters: 5000
   resume: True
 render:
   nerf_type: 'latent'
+  test_box_scale: 0.5

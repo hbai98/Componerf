@@ -1,0 +1,19 @@
+log:
+  exp_name: 'white_bg_infer_box/Sphinxsc_box0.7'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'The Great Sphinx of Giza situated near the Great Pyramid in the desert'
+  node_text_list: ['The Great Sphinx of Giza', 'the Great Pyramid', 'desert']
+  node_pos_list: [[-0.3, -0.3, 0.2], [0.3, 0.3, 0.2],[0,0,-0.2]]
+  node_dim_list: [[0.4, 0.2, 0.4], [0.3, 0.3, 0.3],[0.6,0.6,0.1]]
+  num_layers: 6
+  box_scale: 0.7
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/Sphinxsc/checkpoints/step_008000.pth'
+  iters: 8000
+  resume: True
+render:
+  nerf_type: 'latent'
+  test_box_scale: 0.7

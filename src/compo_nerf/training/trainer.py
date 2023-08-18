@@ -17,15 +17,19 @@ from src.compo_nerf.configs.train_config import TrainConfig
 from src.compo_nerf.training.nerf_dataset import NeRFDataset
 from src.stable_diffusion import StableDiffusion
 from src.utils import make_path, tensor2numpy
+from src.eval_utils import get_label_text, get_global_local_imgs, CLIP_score
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
+from transformers import AutoProcessor, CLIPModel
 
+from tqdm import tqdm
 class Trainer:
     def __init__(self, cfg: TrainConfig):
         self.cfg = cfg
         self.train_step = 0
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         utils.seed_everything(self.cfg.optim.seed)
+        self.save_decompose = cfg.log.save_decompose
 
         # Make dirs
         self.exp_path = make_path(self.cfg.log.exp_dir)
@@ -33,6 +37,7 @@ class Trainer:
         self.train_renders_path = make_path(self.exp_path / 'vis' / 'train')
         self.eval_renders_path = make_path(self.exp_path / 'vis' / 'eval')
         self.final_renders_path = make_path(self.exp_path / 'results')
+        self.decompose_path = make_path(self.exp_path / 'nodes')
 
         self.init_logger()
         pyrallis.dump(self.cfg, (self.exp_path / 'config.yaml').open('w'))
@@ -49,11 +54,10 @@ class Trainer:
             self.load_checkpoint(model_only=False)
         if self.cfg.optim.ckpt is not None:
             self.load_checkpoint(self.cfg.optim.ckpt, model_only=True)
-        if self.cfg.optim.node_ckpt is not None:
-            self.load_node_checkpoint(self.cfg.optim.node_ckpt,
-                                      self.cfg.optim.node_map)
-        # self.writer = SummaryWriter()
-        self.local_only = self.cfg.optim.iters == self.cfg.optim.local_iters
+        if self.cfg.optim.ext_node_ckpt is not None:
+            # self.load_node_checkpoint(self.cfg.optim.ext_node_ckpt,
+            #                           self.cfg.optim.ext_node_map)
+            self.load_ext_nodes(self.cfg.optim.ext_node_ckpt)
         logger.info(f'Successfully initialized {self.cfg.log.exp_name}')
 
     def init_compo_nerf(self):
@@ -117,7 +121,9 @@ class Trainer:
         val_large_loader = NeRFDataset(self.cfg.render, device=self.device, type='val', H=self.cfg.render.eval_h,
                                        W=self.cfg.render.eval_w,
                                        size=self.cfg.log.full_eval_size).dataloader()
-        dataloaders = {'train': train_dataloader, 'val': val_loader, 'val_large': val_large_loader}
+        random_val_dataloader = NeRFDataset(self.cfg.render, device=self.device, type='train', H=self.cfg.render.train_h,
+                                W=self.cfg.render.train_w, size=self.cfg.guide.random_view_num).dataloader()
+        dataloaders = {'train': train_dataloader, 'val': val_loader, 'val_large': val_large_loader, 'random_val': random_val_dataloader}
         return dataloaders
 
     # def init_losses(self) -> Dict[str, Callable]:
@@ -166,10 +172,10 @@ class Trainer:
                 self.optimizer.zero_grad()
 
                 with torch.cuda.amp.autocast(enabled=self.cfg.optim.fp16):
-                    if self.train_step < self.cfg.optim.local_iters:
-                        pred_results, loss = self.train_render(data, local=True)
-                    else:
-                        pred_results, loss = self.train_render(data)
+                    # if self.train_step < self.cfg.optim.local_iters:
+                    #     pred_results, loss = self.train_render(data, local=True)
+                    # else:
+                    pred_results, loss = self.train_render(data)
                     # Skip empty index
                     if loss is None:
                         print('skip iter')
@@ -197,22 +203,37 @@ class Trainer:
         self.nerf.eval()
         save_path.mkdir(exist_ok=True)
 
+            
+        clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+        processor = AutoProcessor.from_pretrained("openai/clip-vit-base-patch32")
         if save_as_video:
             all_preds = []
             all_preds_normals = []
             all_preds_depth = []
-
-        for i, data in enumerate(dataloader):
+        all_global_clip_score = 0
+        all_local_clip_score = 0
+        for i, data in tqdm(enumerate(dataloader)):
             with torch.cuda.amp.autocast(enabled=self.cfg.optim.fp16):
                 # preds, preds_depth, preds_normals = self.eval_render(data)
                 with torch.no_grad():
-                    preds = self.eval_render(data, local=self.local_only)
+                    preds, label_text = self.eval_render(data)
                 if preds is None:
                     continue
             # pred, pred_depth, pred_normals = tensor2numpy(preds[0]), tensor2numpy(preds_depth[0]), tensor2numpy(
             #     preds_normals[0])
 
+            global_image, local_images = get_global_local_imgs(preds)
+            global_clip_score, local_clip_score = CLIP_score(clip_model, processor, label_text, global_image, local_images)
+            
+            all_global_clip_score += global_clip_score
+            all_local_clip_score += local_clip_score
             if save_as_video:
+
+                for key in preds.keys():
+                    if 'image' in key or 'weights_sum' in key or 'ws' in key:
+                        save_img = tensor2numpy(preds[key][0])
+                        Image.fromarray(save_img).save(save_path / f"{self.train_step}_{i:04d}_{key}.png")
+
                 for key in preds.keys():
                     if 'global_image' in key and 'norm' not in key:
                         pred = tensor2numpy(preds[key][0])
@@ -228,6 +249,12 @@ class Trainer:
                 # Image.fromarray(pred_normals).save(save_path / f"{self.train_step}_{i:04d}_normals.png")
                 # Image.fromarray(pred_depth).save(save_path / f"{self.train_step}_{i:04d}_depth.png")
 
+        avg_global_clip_score = all_global_clip_score / len(dataloader)
+        avg_local_clip_score = all_local_clip_score / len(dataloader)
+        logger.log(20, f"global CLIP-Score: {avg_global_clip_score.item()}")
+        logger.log(20, f"local CLIP-Score: {avg_local_clip_score.item()}")
+        self.writer.add_scalar('global_clip_score', avg_global_clip_score, self.train_step)
+        self.writer.add_scalar('local_clip_score', avg_local_clip_score, self.train_step)
         if save_as_video:
             all_preds = np.stack(all_preds, axis=0)
             # all_preds_normals = np.stack(all_preds_normals, axis=0)
@@ -243,7 +270,12 @@ class Trainer:
         logger.info('Done!')
 
     def full_eval(self):
-        self.evaluate(self.dataloaders['val_large'], self.final_renders_path, save_as_video=True)
+        if self.save_decompose:
+            self.nerf.decompose(self.decompose_path)
+        if not self.cfg.guide.random_view_eval:
+            self.evaluate(self.dataloaders['val_large'], self.final_renders_path, save_as_video=True)
+        else:
+            self.evaluate(self.dataloaders['random_val'], self.final_renders_path, save_as_video=False)
 
     def train_render(self, data: Dict[str, Any], local=False):
         # TODO add multi nodes render training
@@ -259,27 +291,27 @@ class Trainer:
             shading = 'lambertian'
             ambient_ratio = 0.1
         bg_color = torch.rand((B * N, 4), device=rays_o.device)  # Will be used if bg_radius <= 0
-        if local:
-            outputs = self.nerf.local_render(data=data, perturb=True, bg_color=bg_color,
-                                             ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True,
-                                             )
-            if outputs is None:
-                return None, None
-            loss = 0
-            loss += outputs.pop('global_losses', 0)
-            loss += outputs.pop('local_losses')
-            return outputs, loss
-        else:
-            outputs = self.nerf.render(data=data, perturb=True, bg_color=bg_color,
-                                       ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True, step=self.train_step
-                                       )
-            if outputs is None:
-                return None, None
-            loss = 0
-            loss += outputs.pop('global_losses', 0)
-            loss += outputs.pop('local_losses', 0)
+        # if local:
+        #     outputs = self.nerf.local_render(data=data, perturb=True, bg_color=bg_color,
+        #                                      ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True,
+        #                                      )
+        #     if outputs is None:
+        #         return None, None
+        #     loss = 0
+        #     loss += outputs.pop('global_losses', 0)
+        #     loss += outputs.pop('local_losses')
+        #     return outputs, loss
+        # else:
+        outputs = self.nerf.render(data=data, perturb=True, bg_color=bg_color,
+                                    ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True, step=self.train_step
+                                    )
+        if outputs is None:
+            return None, None
+        loss = 0
+        loss += outputs.pop('global_losses', 0)
+        loss += outputs.pop('local_losses', 0)
 
-            return outputs, loss
+        return outputs, loss
 
     def vis_rays_image(self, img, name):
         from PIL import Image
@@ -301,12 +333,14 @@ class Trainer:
             bg_color = bg_color.to(rays_o.device)
         else:
             bg_color = torch.rand((B * N, 4), device=rays_o.device)  # [3]
+        # white background
+        bg_color = torch.ones_like(bg_color) * torch.tensor([1.4889, 0.7632, -0.2834, -0.9350], device=bg_color.device)
 
         shading = data['shading'] if 'shading' in data else 'albedo'
         ambient_ratio = data['ambient_ratio'] if 'ambient_ratio' in data else 1.0
         light_d = data['light_d'] if 'light_d' in data else None
 
-        # if local is true, which means no global mlp is trained, and global forward should not be used. 
+        label_text = get_label_text(data, self.nerf.cfg.guide.text)
         outputs = self.nerf.render(data, perturb=perturb, light_d=light_d,
                                     ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True,
                                     bg_color=bg_color)
@@ -344,12 +378,12 @@ class Trainer:
                                            bg_color=torch.ones((B * N, 4), device=rays_o.device))
         
         if outputs_normals is None:
-            return pred_results
+            return pred_results, None
         for key in outputs_normals.keys():
             if 'image' in key:
                 pred_results[f'norm_{key}'] = outputs_normals[key][:, :3, :, :].permute(0, 2, 3, 1).reshape(B, H, W, 3).contiguous()
 
-        return pred_results
+        return pred_results, label_text
 
     def log_train_renders(self, outputs: torch.Tensor):
         B, H, W = 1, 64, 64
@@ -391,6 +425,21 @@ class Trainer:
 
                 Image.fromarray(pred).save(save_path)
 
+    def load_ext_nodes(self, ckpts):
+        for c_id, ckpt in enumerate(ckpts):
+            if ckpt == "":
+                continue
+            s_node = torch.load(ckpt, map_location=self.device)
+            t_node = self.nerf.dict_id2classnode[c_id]
+            text = self.nerf.dict_id2classnode[c_id].cfg.guide.text
+            missing_keys, unexpected_keys = t_node.load_state_dict(s_node, strict=False)
+            logger.info(f"loaded external node {text}.")
+            if len(missing_keys) > 0:
+                logger.warning(f"missing keys: {missing_keys}")
+            if len(unexpected_keys) > 0:
+                logger.warning(f"unexpected keys: {unexpected_keys}")     
+            
+            
     def load_node_checkpoint(self, checkpoints=None, node_maps=None):
         for checkpoint, node_map in zip(checkpoints, node_maps):
             checkpoint_dict = torch.load(checkpoint, map_location=self.device)

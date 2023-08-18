@@ -1,0 +1,12 @@
+log:
+  exp_name: 'abls/bed_room_sjc'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  text: 'A bed is next to a nightstand with a table lamp on it in a room'
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/bed_room_sjc/checkpoints/step_005000.pth'
+  iters: 5000
+render:
+  nerf_type: 'latent'

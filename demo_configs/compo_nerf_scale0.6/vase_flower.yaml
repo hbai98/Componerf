@@ -1,0 +1,18 @@
+log:
+  exp_name: 'white_bg_infer_box/vase_flowe_box0.6'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'A bunch of sunflowers in a barnacle encrusted clay vase'
+  node_text_list: ['A bunch of sunflowers', 'a clay vase']
+  node_pos_list: [[0.0, 0.0, 0.5], [0.0, 0.0, 0.0]]
+  node_dim_list: [[0.3, 0.3, 0.5], [0.5, 0.5, 0.5]]
+  box_scale: 0.7
+  num_layers: 4
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/vase_flower/checkpoints/step_008000.pth'
+  iters: 8000
+render:
+  nerf_type: 'latent'
+  test_box_scale: 0.6

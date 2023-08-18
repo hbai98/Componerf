@@ -1,17 +1,18 @@
 log:
-  exp_name: 'computer_station'
+  exp_name: 'white_bg_infer/computer_station'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'The computer station with a large monitor, a mechanical keyboard and gaming mouse, and noise-cancelling headphones.'
   node_text_list: ['a large monitor', 'a mechanical keyboard', 'gaming mouse', 'noise-cancelling headphones']
   node_pos_list: [[0.74911, -0.499263, 1.88797 ], [3.62748, -0.292284, -0.262944], [6.29444, 3.7789, -0.192133], [1.36114 , 4.08563 , -0.317501]]
   node_dim_list: [[1.69728, 2.50229, 2.72625], [1.35031, 3.54869, 0.405325], [1.06418, 0.723235, 0.666824], [1.92274, 1.71339, 0.716477]]
-  box_scale: 0.7
+  box_scale: 0.6
   num_layers: 4
 optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/computer_station/checkpoints/step_008000.pth'
   iters: 8000
-  local_iters: 0
   lambda_global: 100
   lambda_local: 100
   resume: True
@@ -23,3 +24,4 @@ render:
 #  render in high resolution
   eval_w: 128
   eval_h: 128
+  test_box_scale: 0.5

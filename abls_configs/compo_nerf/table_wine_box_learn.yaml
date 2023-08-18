@@ -13,7 +13,6 @@ guide:
   use_cond_sublatent: False
 optim:
   iters: 8000
-  local_iters: 0 # 0
   lambda_global: 100
   lambda_local: 100
   resume: True

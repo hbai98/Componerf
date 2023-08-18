@@ -1,6 +1,7 @@
 log:
-  exp_name: 'Sphinx'
+  exp_name: 'white_bg_infer/Sphinxsc'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'The Great Sphinx of Giza situated near the Great Pyramid in the desert'
@@ -10,7 +11,9 @@ guide:
   num_layers: 6
   box_scale: 0.7
 optim:
-  iters: 12000
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/Sphinxsc/checkpoints/step_008000.pth'
+  iters: 8000
   resume: True
 render:
   nerf_type: 'latent'
+  test_box_scale: 0.5

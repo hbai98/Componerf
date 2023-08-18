@@ -16,7 +16,8 @@ class GuideConfig:
     norm_box: bool = False
     # global color dependent on positions from the world frame
     use_global_albedo: bool = True
-    use_global_loss: bool = True
+    use_global_calibration: bool = True # global compostion control
+    use_global_text_loss: bool = True # wether training by global text 
     use_global_density: bool = True
     use_local_loss: bool = True
     use_hyper_params: bool = True
@@ -47,6 +48,9 @@ class GuideConfig:
     node_pos_list: List[List[float]] = None
     node_dim_list: List[List[float]] = None
     train_with_crop: bool = False
+    # will no save videos
+    random_view_eval: bool = False
+    random_view_num: int = 200
 
 @dataclass
 class OptimConfig:
@@ -61,7 +65,6 @@ class OptimConfig:
     seed: int = 0
     # Total iters
     iters: int = 5000
-    local_iters: int = 0
     # Learning rate
     lr: float = 1e-3
     # use amp mixed precision training
@@ -72,8 +75,9 @@ class OptimConfig:
     resume: bool = False
     # Load existing model
     ckpt: Optional[str] = None
-    node_ckpt: Optional[List[str]] = None
-    node_map: Optional[List[dict]] = None
+    # Recomposition
+    ext_node_ckpt: Optional[List[str]] = None
+    # ext_node_map: Optional[List[dict]] = None
 @dataclass
 class LogConfig:
     """ Parameters for logging and saving """
@@ -93,7 +97,11 @@ class LogConfig:
     max_keep_ckpts: int = 2
     # Skip decoding and vis only depth and normals
     skip_rgb: bool = False
-
+    # Save decomposed nodes into ckpts
+    save_decompose: bool = True
+    # Save video at the full evaluation
+    save_video: bool = True
+    
     @property
     def exp_dir(self) -> Path:
         return self.exp_root / self.exp_name

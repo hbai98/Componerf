@@ -28,7 +28,7 @@ class GuideConfig:
     mesh_scale: float = 0.7
     # Define the proximal distance allowed
     proximal_surface: float = 0.3
-
+    sjc: bool = False
 
 @dataclass
 class OptimConfig:
@@ -85,7 +85,6 @@ class TrainConfig:
     render: RenderConfig = field(default_factory=RenderConfig)
     optim: OptimConfig = field(default_factory=OptimConfig)
     guide: GuideConfig = field(default_factory=GuideConfig)
-    sjc: bool = False
     def __post_init__(self):
         if self.log.eval_only and (self.optim.ckpt is None and not self.optim.resume):
             logger.warning(

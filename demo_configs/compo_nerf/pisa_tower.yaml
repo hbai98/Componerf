@@ -1,6 +1,7 @@
 log:
-  exp_name: 'pisa_tower'
+  exp_name: 'white_bg_infer/pisa_tower_box0.42'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'The sydney opera house is next to the Leaning Tower of Pisa'
@@ -10,7 +11,9 @@ guide:
   num_layers: 4
   box_scale: 0.7
 optim:
-  iters: 15000
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/pisa_tower/checkpoints/step_008000.pth'
+  iters: 8000
   resume: True
 render:
   nerf_type: 'latent'
+  test_box_scale: 0.42

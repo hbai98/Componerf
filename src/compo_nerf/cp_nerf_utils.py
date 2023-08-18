@@ -535,17 +535,6 @@ def normalize_bound(bound, poses, dims, box_scale=0.8):
     assert th.all(dims > 0), 'The dimension should be positive values'
     # move the group obj to the center 
     
-    
- 
-    
-    # scale poses to [-bound, bound]
-    poses = poses - rearrange(torch.min(poses, dim=-1)[0], 'N -> N 1')
-    scale = rearrange(torch.max(poses, dim=-1)[0], 'N -> N 1')
-    poses = poses / scale
-    dims = dims / scale 
-    poses = poses*bound*2
-    dims = dims*bound*2
-    poses = poses - bound
    # to center
     shift_g = th.zeros(B).to(device) - th.mean(poses.T, dim=-1) 
     poses = poses + shift_g # [n,3]

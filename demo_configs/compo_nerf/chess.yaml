@@ -1,6 +1,7 @@
 log:
-  exp_name: 'chess'
+  exp_name: 'white_bg_infer/chess'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'A white king chess piece and a black queen chess piece on a chess board.'
@@ -10,9 +11,11 @@ guide:
   box_scale: 0.6
   num_layers: 6
 optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/chess/checkpoints/step_008000.pth'
   iters: 8000
   resume: True
   lambda_global: 100
   lambda_local: 100
 render:
   nerf_type: 'latent'
+  test_box_scale: 0.5

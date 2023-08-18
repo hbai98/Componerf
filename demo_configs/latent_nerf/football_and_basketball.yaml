@@ -1,0 +1,12 @@
+log:
+  exp_name: 'latent/football_and_basketball'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: False
+  text: 'a football and a basketball'
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/bed_room_latent/checkpoints/step_005000.pth'
+  iters: 5000
+render:
+  nerf_type: 'latent'

@@ -1,0 +1,21 @@
+log:
+  exp_name: 'white_bg_infer_box/chess_box0.7'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'A white king chess piece and a black queen chess piece on a chess board.'
+  node_text_list: ['A white king chess piece', 'a black queen chess piece', 'a chess board']
+  node_pos_list: [[-0.26447, 0.5087, 0.2], [0.25545, -0.36888, 0.2], [0.0, 0.0, -0.1]]
+  node_dim_list: [[0.16, 0.16, 0.43], [0.16, 0.16, 0.43], [0.9, 0.9, 0.133]]
+  box_scale: 0.6
+  num_layers: 6
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/chess/checkpoints/step_008000.pth'
+  iters: 8000
+  resume: True
+  lambda_global: 100
+  lambda_local: 100
+render:
+  nerf_type: 'latent'
+  test_box_scale: 0.7

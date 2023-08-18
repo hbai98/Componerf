@@ -1,6 +1,7 @@
 log:
-  exp_name: 'apple_banana'
+  exp_name: 'white_bg_infer/apple_banana_random_view'
   save_interval: 1000
+  eval_only: True
 guide:
   sjc: True
   text: 'a red apple and a yellow banana'
@@ -9,8 +10,11 @@ guide:
   node_dim_list: [[0.8, 0.8, 0.8], [0.3, 0.8, 0.3]]
   num_layers: 3
   box_scale: 0.7
+  random_view_eval: True
 optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/apple_banana/checkpoints/step_005000.pth'
   iters: 5000
   resume: True
 render:
   nerf_type: 'latent'
+  test_box_scale: 0.5

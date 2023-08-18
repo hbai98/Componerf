@@ -1,0 +1,19 @@
+log:
+  exp_name: 'white_bg_infer_box/whale_box0.7'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'A blue whale is swimming around a iceberg on sea'
+  node_text_list: ['a blue whale is swimming', 'iceberg', 'sea surface']
+  node_pos_list: [[-0.3, 0.0, -0.1], [0.3, 0.3, 0.2],[0,0,-0.2]]
+  node_dim_list: [[0.4, 0.2, 0.2], [0.3, 0.3, 0.3],[0.4,0.4,0.1]]
+  num_layers: 6
+  box_scale: 0.7
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/whale/checkpoints/step_008000.pth'
+  iters: 8000
+  resume: True
+render:
+  nerf_type: 'latent'
+  test_box_scale: 0.7

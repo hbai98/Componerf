@@ -1,0 +1,57 @@
+# log:
+#   exp_name: 'table_wine_all_MLP_6_eval'
+#   save_interval: 1000
+# guide:
+#   sjc: True
+#   text: 'Glasses of wine, salad and french bread on a wooden table.'
+#   node_text_list: ['Glasses of wine', 'salad', 'french bread', 'wooden table']
+#   node_pos_list: [[-0.26447, 0.5087, 0.27625], [-0.25545, -0.36888, 0.14814], [0.44915, 0.14557, 0.17127], [0.12505, -0.027665, -0.075758]]
+#   node_dim_list: [[0.16, 0.16, 0.43], [0.317, 0.342, 0.289], [0.169, 0.3, 0.302], [0.752, 0.752, 0.266]]
+#   box_scale: 0.6
+#   num_layers: 6
+# optim:
+#   iters: 8000
+#   lambda_global: 100
+#   lambda_local: 100
+#   resume: True
+#   lr: 1e-3
+# render:
+#   nerf_type: 'latent'
+#   density_thresh: 10
+#   density_init: 5e-1
+# #  render in high resolution
+#   eval_w: 128
+#   eval_h: 128
+log:
+  exp_name: 'white_bg_infer_box/table_wine_box0.7'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'Glasses of wine, salad and french bread on a wooden table.'
+  node_text_list: ['Glasses of wine', 'salad', 'french bread', 'wooden table']
+  node_pos_list: [[-0.26447, 0.5087, 0.27625], [-0.25545, -0.36888, 0.14814], [0.44915, 0.14557, 0.17127], [0.12505, -0.027665, -0.075758]]
+  node_dim_list: [[0.32, 0.32, 0.86], [0.634, 0.684, 0.578], [0.378, 0.6, 0.604], [1.504, 1.504, 0.266]]
+  box_scale: 0.6
+  num_layers: 4
+  use_global_density: True
+  use_global_calibration: True
+  # use_cond_sublatent: False
+  # use_learnable_pos_dim: True 
+  # global_weight: 1e-1
+  use_hyper_params: False
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/table_wine_all_MLP_6_density_hyper/checkpoints/step_008000.pth'
+  iters: 8000
+  lambda_global: 100
+  lambda_local: 100
+  resume: True
+  lr: 1e-3
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+#  render in high resolution
+  eval_w: 128
+  eval_h: 128
+  test_box_scale: 0.7

@@ -1,5 +1,13 @@
 import pyrallis
 
+import os
+import sys
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+os.environ['CURL_CA_BUNDLE'] = ''
 from src.compo_nerf.configs.train_config import TrainConfig
 from src.compo_nerf.training.trainer import Trainer
 

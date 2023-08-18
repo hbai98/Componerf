@@ -1,0 +1,33 @@
+log:
+  exp_name: 'abls/recompose/target/astronaut_bed'
+  save_interval: 500
+  # eval_only: True
+guide:
+  sjc: True
+  text: 'After a long day in space, the tired astronaut is standing by the bed'
+  node_text_list: ['the tired astronaut', 'bed']
+  node_pos_list: [[-0.4, -0.17, 0.015], [0, 0, -0.11]]
+  node_dim_list: [[0.2, 0.2, 0.4], [0.2, 0.6, 0.3]]
+  box_scale: 0.6
+  num_layers: 4
+  # random_view_eval: True
+
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/astronaut/checkpoints/step_008000.pth'
+  iters: 2000
+  lambda_global: 100
+  lambda_local: 50
+  # lambda_shape: 5e-3
+  # lambda_sparsity: 5e-4
+  resume: True
+  ext_node_ckpt: [
+    'experiments/abls/recompose/source/astronaut/nodes/an astronaut.pth',
+    'experiments/abls/recompose/source/bed_room/nodes/a bed.pth',
+  ]
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.5
+
+

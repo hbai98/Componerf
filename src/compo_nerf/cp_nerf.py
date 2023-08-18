@@ -21,6 +21,8 @@ import torch.nn.functional as F
 from PIL import Image
 from einops import rearrange
 
+import os
+
 
 class CompoNeRF(nn.Module):
     def __init__(self, cfg, diffusion, hidden_dim=64, writer=None) -> None:
@@ -37,7 +39,8 @@ class CompoNeRF(nn.Module):
         self.hidden_dim = hidden_dim
         self.num_layers = cfg.guide.num_layers
         self.use_global_albedo = cfg.guide.use_global_albedo
-        self.use_global_loss = cfg.guide.use_global_loss
+        self.use_global_calibration = cfg.guide.use_global_calibration
+        self.use_global_text_loss = cfg.guide.use_global_text_loss
         self.use_global_density = cfg.guide.use_global_density
         self.use_local_loss = cfg.guide.use_local_loss
         self.box_scale = cfg.guide.box_scale
@@ -49,27 +52,22 @@ class CompoNeRF(nn.Module):
         self.use_params = cfg.guide.use_hyper_params
         self.use_learnable_pos_dim = self.cfg.guide.use_learnable_pos_dim
         self.use_cond_sublatent = self.cfg.guide.use_cond_sublatent
-        
         self.global_weight = self.cfg.guide.global_weight
+        # this is the variable to control use of global rendering
         
         self.text_z = self.calc_text_embeddings(self.prompt)
         self.pose_weight = None
-        if self.use_params:
+        if self.use_params and self.use_global_calibration:
             self.global_sigma = nn.Parameter(th.tensor(1e-1))
             self.global_color = nn.Parameter(th.tensor(1e-1))
             self.global_color_direction = nn.Parameter(th.tensor(1e-1))
             if self.use_learnable_pos_dim:
                 self.pose_weight = nn.Parameter(th.tensor(1e0))
             
-            
         self.writer = writer
-        # if local box only for rendering
-        if self.cfg.optim.iters == self.cfg.optim.local_iters:
-            self.use_global_loss = False
         
-        # if self.use_global_loss:
         # global should always be constructed no matter whether global loss is applied. 
-        if self.use_global_albedo or self.use_global_density:
+        if self.use_global_albedo or self.use_global_density and self.use_global_calibration:
             self.encoder_o, self.in_dim_o = get_encoder('tiledgrid', input_dim=3,
                                                         desired_resolution=2048 * self.bound)
             self.encoder_d, self.in_dim_d = get_encoder('frequency', input_dim=3)
@@ -125,7 +123,7 @@ class CompoNeRF(nn.Module):
         return g
 
     def global_forward(self, o, d, albedo, density, with_residual=True, step=None):
-        if not self.use_global_loss:
+        if not self.use_global_calibration:
             return albedo, density
         if not self.use_global_albedo and not self.use_global_density:
             return albedo, density
@@ -169,7 +167,6 @@ class CompoNeRF(nn.Module):
             self.writer.add_scalar('orig/color', self.global_color, step)
             self.writer.add_scalar('orig/sigma', self.global_sigma, step)
             self.writer.add_scalar('orig/direction', self.global_color_direction, step)
-            self.writer.add_scalar('orig/global', self.global_color_direction, step)
 
         return albedo, density
 
@@ -284,14 +281,25 @@ class CompoNeRF(nn.Module):
         if len(r) == 0:
             raise ValueError('It is not initalized properly.')
         return r
-
+    
+    def decompose(self, ckpt_folder):
+        print('Node decomposition starts.')
+        for id_c, c_node in self.dict_id2classnode.items():
+            text = c_node.cfg.guide.text
+            node = c_node.state_dict()
+            file_path = f"{text}.pth"
+            torch.save(node, ckpt_folder / file_path)
+            print(f'Save {file_path}')
+        print('Node decomposition finished.')
+            
+        
     def get_params(self, lr):
         all_params = [
             self.dict_id2classnode[c_node].nerf.get_params(lr)
             for c_node in self.dict_id2classnode.keys()
         ]
         # add params from sg
-        if self.use_params:
+        if self.use_params and self.use_global_calibration:
             all_params.append([
                 {'params': [self.global_sigma, self.global_color, self.global_color_direction], 'lr': lr},
             ])
@@ -720,11 +728,11 @@ class CompoNeRF(nn.Module):
         results['global_image'] = image
         res['wIdxes'] = intersection_map[:, 0]
         if self.training:
-            if self.use_global_loss:
+            if self.use_global_text_loss:
                 global_losses = self.get_global_losses(
                     (data['dir'], B, H, W),
                     res, crop=self.train_with_crop)
-                # idx -> world ray index -> to composite image
+             # idx -> world ray index -> to composite image
                 results['global_losses'] = global_losses
             # if self.use_local_loss:
             results['local_losses'] = th.stack(local_losses).mean()
@@ -771,7 +779,7 @@ class CompoNeRF(nn.Module):
         img = outputs['image'].contiguous()
         if self.cfg.guide.append_direction:
             dirs = data[0]  # [B,]
-            text_z = self.text_z[dirs]
+            text_z = self.text_z[dirs] # [6->1]
         else:
             text_z = self.text_z
         pred_rgb = img.reshape(
@@ -860,7 +868,7 @@ class ClassNode(nn.Module):
         sigmas = intermediate_results['sigmas']
         img = intermediate_results['img']
         ws = intermediate_results['ws']
-        cid = intermediate_results['cid'] 
+        # cid = intermediate_results['cid'] 
         if crop:
             wIdxes = intermediate_results['wIdxes']  # wo
             rays_shift_indx = intermediate_results['rays_shift_indx']

@@ -1,0 +1,19 @@
+log:
+  exp_name: 'white_bg_infer/eiffel_05'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'The sydney opera house, the Leaning tower of Pisa, and the Eiffel tower are situated in a triangle'
+  node_text_list: ['The sydney opera house', 'The Leaning Tower of Pisa', 'The Eiffel tower']
+  node_pos_list: [[-0.3, 0.0, 0.0], [0.3, 0.0, 0.0], [0.0, 0.3, 0.0]]
+  node_dim_list: [[0.25, 0.25, 0.3], [0.2, 0.2, 0.4], [0.2, 0.2, 0.4]]
+  num_layers: 4
+  box_scale: 0.7
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/eiffel/checkpoints/step_008000.pth'
+  iters: 8000
+  resume: True
+render:
+  nerf_type: 'latent'
+  test_box_scale: 0.5

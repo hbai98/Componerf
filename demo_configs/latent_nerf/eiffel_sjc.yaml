@@ -1,0 +1,24 @@
+log:
+  exp_name: 'latent/eiffel'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  text: 'The sydney opera house, the Leaning tower of Pisa, and the Eiffel tower are situated in a triangle.'
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/bed_room_latent/checkpoints/step_005000.pth'
+  iters: 8000
+render:
+  nerf_type: 'latent'
+# log:
+#   exp_name: 'latent_sjc/Sphinxsc_1'
+#   save_interval: 1000
+#   # eval_only: True
+# guide:
+#   sjc: True
+#   text: 'The sydney opera house, the Leaning tower of Pisa, and the Eiffel tower are situated in a triangle'
+# optim:
+#   # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/bed_room_latent/checkpoints/step_005000.pth'
+#   iters: 5000
+# render:
+#   nerf_type: 'latent'

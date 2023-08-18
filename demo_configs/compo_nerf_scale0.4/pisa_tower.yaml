@@ -1,0 +1,19 @@
+log:
+  exp_name: 'white_bg_infer_box/pisa_tower_box0.4'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'The sydney opera house is next to the Leaning Tower of Pisa'
+  node_text_list: ['The sydney opera house', 'the Leaning Tower of Pisa']
+  node_pos_list: [[-0.3, 0.0, 0.0], [0.3, 0.0, 0.0]]
+  node_dim_list: [[0.25, 0.25, 0.3], [0.2, 0.2, 0.4]]
+  num_layers: 4
+  box_scale: 0.7
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/pisa_tower/checkpoints/step_008000.pth'
+  iters: 8000
+  resume: True
+render:
+  nerf_type: 'latent'
+  test_box_scale: 0.4

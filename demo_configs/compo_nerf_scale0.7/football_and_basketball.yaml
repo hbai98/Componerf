@@ -1,0 +1,19 @@
+log:
+  exp_name: 'white_bg_infer_box/football_and_basketball_box0.7'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'a football and a basketball'
+  node_text_list: ['a football', 'a basketball']
+  node_pos_list: [[-0.4, 0.0, 0.0], [0.4, 0.0, 0.0]]
+  node_dim_list: [[0.4, 0.4, 0.4], [0.4, 0.4, 0.4]]
+  num_layers: 4
+  box_scale: 0.7
+optim:
+  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/football_and_basketball/checkpoints/step_005000.pth'
+  iters: 5000
+  resume: True
+render:
+  nerf_type: 'latent'
+  test_box_scale: 0.7

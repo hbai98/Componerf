@@ -1,0 +1,12 @@
+log:
+  exp_name: 'latent/vase_flowe'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: False
+  text: 'A bunch of sunflowers in a barnacle encrusted clay vase'
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/bed_room_latent/checkpoints/step_005000.pth'
+  iters: 5000
+render:
+  nerf_type: 'latent'

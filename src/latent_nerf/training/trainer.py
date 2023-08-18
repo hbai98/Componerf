@@ -17,7 +17,8 @@ from src.latent_nerf.configs.train_config import TrainConfig
 from src.latent_nerf.models.renderer import NeRFRenderer
 from src.latent_nerf.training.nerf_dataset import NeRFDataset
 from src.stable_diffusion import StableDiffusion
-from src.utils import make_path, tensor2numpy
+from src.utils import make_path, tensor2numpy, get_label_text, get_global_local_imgs, CLIP_score
+from transformers import AutoProcessor, CLIPModel
 
 
 class Trainer:
@@ -25,7 +26,7 @@ class Trainer:
         self.cfg = cfg
         self.train_step = 0
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.sjc = cfg.sjc
+        self.sjc = cfg.guide.sjc
         utils.seed_everything(self.cfg.optim.seed)
 
         # Make dirs
@@ -34,7 +35,7 @@ class Trainer:
         self.train_renders_path = make_path(self.exp_path / 'vis' / 'train')
         self.eval_renders_path = make_path(self.exp_path / 'vis' / 'eval')
         self.final_renders_path = make_path(self.exp_path / 'results')
-
+        
         self.init_logger()
         pyrallis.dump(self.cfg, (self.exp_path / 'config.yaml').open('w'))
 
@@ -147,6 +148,8 @@ class Trainer:
         self.evaluate(self.dataloaders['val'], self.eval_renders_path)
         self.nerf.train()
 
+
+            
         pbar = tqdm(total=self.cfg.optim.iters, initial=self.train_step,
                     bar_format='{desc}: {percentage:3.0f}% training step {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]')
         while self.train_step < self.cfg.optim.iters:
@@ -185,21 +188,31 @@ class Trainer:
         self.nerf.eval()
         save_path.mkdir(exist_ok=True)
 
+        clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+        processor = AutoProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
         if save_as_video:
             all_preds = []
             all_preds_normals = []
             all_preds_depth = []
-
+        
+        all_clip_score = 0
+        # all_local_clip_score = 0
         for i, data in enumerate(dataloader):
             with torch.cuda.amp.autocast(enabled=self.cfg.optim.fp16):
                 if False:# self.cfg.guide.shape_path_a is not None:
                     preds, preds_depth, preds_normals, preds_a, pred_depth_a = self.eval_render(data)
                 else:
-                    preds, preds_depth, preds_normals = self.eval_render(data)
+                    preds, preds_depth, preds_normals, label_text = self.eval_render(data)
 
+            # global_image, local_images = get_global_local_imgs(preds)
+            # all_local_clip_score += local_clip_score
             pred, pred_depth, pred_normals = tensor2numpy(preds[0]), tensor2numpy(preds_depth[0]), tensor2numpy(
                 preds_normals[0])
-
+            clip_score = CLIP_score(clip_model, processor, label_text, pred)
+            
+            all_clip_score += clip_score
+            
             if save_as_video:
                 all_preds.append(pred)
                 all_preds_normals.append(pred_normals)
@@ -214,6 +227,10 @@ class Trainer:
                 Image.fromarray(pred_normals).save(save_path / f"{self.train_step}_{i:04d}_normals.png")
                 Image.fromarray(pred_depth).save(save_path / f"{self.train_step}_{i:04d}_depth.png")
 
+        avg_clip_score = all_clip_score / len(dataloader)
+        # avg_local_clip_score = all_local_clip_score / len(dataloader)
+        logger.log(20, f"CLIP-Score: {avg_clip_score.item()}")
+        # logger.log(20, f"local CLIP-Score: {avg_local_clip_score.item()}")
         if save_as_video:
             all_preds = np.stack(all_preds, axis=0)
             all_preds_normals = np.stack(all_preds_normals, axis=0)
@@ -229,7 +246,7 @@ class Trainer:
         logger.info('Done!')
 
     def full_eval(self):
-        self.evaluate(self.dataloaders['val_large'], self.final_renders_path, save_as_video=True)
+        self.evaluate(self.dataloaders['val_large'], self.final_renders_path, save_as_video=self.cfg.log.save_video)
 
     def train_render(self, data: Dict[str, Any]):
         rays_o, rays_d = data['rays_o'], data['rays_d']  # [B, N, 3] # ([1, 4096, 3])
@@ -320,6 +337,7 @@ class Trainer:
         shading = data['shading'] if 'shading' in data else 'albedo'
         ambient_ratio = data['ambient_ratio'] if 'ambient_ratio' in data else 1.0
         light_d = data['light_d'] if 'light_d' in data else None
+        label_text = self.cfg.guide.text
         outputs = self.nerf.render(rays_o, rays_d, staged=True, perturb=perturb, light_d=light_d,
                                        ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True,
                                        bg_color=bg_color)
@@ -343,7 +361,7 @@ class Trainer:
                                            ambient_ratio=ambient_ratio, shading=shading, force_all_rays=True,
                                            disable_background=True)
         pred_normals = outputs_normals['image'][:, :, :3].reshape(B, H, W, 3).contiguous()
-        return pred_rgb, pred_depth, pred_normals
+        return pred_rgb, pred_depth, pred_normals, label_text
 
     def log_train_renders(self, pred_rgbs: torch.Tensor):
         if self.nerf.latent_mode:

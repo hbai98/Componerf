@@ -1,24 +1,26 @@
 log:
-  exp_name: 'table_wine_all_MLP_6_density'
+  # exp_name: 'table_wine_all_MLP_6_density'
+  exp_name: 'white_bg_infer_box/table_wine_infer_step8000_density_x2'
   save_interval: 1000
-  eval_only: False
+  eval_only: True
 guide:
   sjc: True
   text: 'Glasses of wine, salad and french bread on a wooden table.'
   node_text_list: ['Glasses of wine', 'salad', 'french bread', 'wooden table']
-  node_pos_list: [[-0.26447, 0.5087, 0.27625], [-0.25545, -0.36888, 0.14814], [0.44915, 0.14557, 0.17127], [0.12505, -0.027665, -0.075758]]
+  node_pos_list: [[-0.52894, 1.0174, 0.5525], [-0.5109, -0.73776, 0.29628], [0.8983, 0.29114, 0.34254], [0.2501, -0.05533, -0.151516]]
   node_dim_list: [[0.32, 0.32, 0.86], [0.634, 0.684, 0.578], [0.378, 0.6, 0.604], [1.504, 1.504, 0.266]]
   box_scale: 0.6
   num_layers: 4
   use_global_density: True
-  use_global_loss: True
   # use_cond_sublatent: False
   # use_learnable_pos_dim: True 
   # global_weight: 1e-1
-  use_hyper_params: False
+  use_hyper_params: True
+  # random_view_eval: True
 optim:
+  ckpt: 'experiments/abls/table_wine_all_MLP_6_density_hyper/checkpoints/step_008000.pth'
+  # ckpt: '/home/data/haotianbai/workdir/step_008000.pth'
   iters: 8000
-  local_iters: 0 # 0
   lambda_global: 100
   lambda_local: 100
   resume: True
@@ -28,5 +30,6 @@ render:
   density_thresh: 10
   density_init: 5e-1
 #  render in high resolution
+  test_box_scale: 0.5 #0.6
   eval_w: 128
   eval_h: 128

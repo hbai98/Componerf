@@ -1,0 +1,12 @@
+log:
+  exp_name: 'latent/table_wine'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: False
+  text: 'Glasses of wine, salad and french bread on a wooden table.'
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/bed_room_latent/checkpoints/step_005000.pth'
+  iters: 5000
+render:
+  nerf_type: 'latent'

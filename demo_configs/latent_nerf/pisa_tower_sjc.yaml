@@ -1,0 +1,12 @@
+log:
+  exp_name: 'latent_sjc/pisa_tower_8000'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  text: 'The sydney opera house is next to the Leaning Tower of Pisa'
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/bed_room_latent/checkpoints/step_005000.pth'
+  iters: 8000
+render:
+  nerf_type: 'latent'

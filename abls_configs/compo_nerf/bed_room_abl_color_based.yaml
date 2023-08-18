@@ -1,0 +1,27 @@
+log:
+  exp_name: 'abls/bed_room_color_based'
+  save_interval: 1000
+  eval_only: True
+guide:
+  sjc: True
+  text: 'A bed is next to a nightstand with a table lamp on it in a room'
+  node_text_list: ['a bed', 'a nightstand', 'a table lamp']
+  node_pos_list: [[0.0, 0.0, -0.1], [-0.4, -0.2, -0.1], [-0.4, -0.2, 0.1]]
+  node_dim_list: [[0.2, 0.32, 0.16], [0.16, 0.16, 0.16], [0.1, 0.1, 0.2]]
+  box_scale: 0.7
+  num_layers: 4
+  # use_global_calibration: False
+  # use_global_text_loss: False
+  use_global_density: False
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/bed_room/checkpoints/step_005000.pth'
+  iters: 8000
+  lambda_global: 100
+  lambda_local: 100
+  resume: True
+  lr: 1e-3
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.5
