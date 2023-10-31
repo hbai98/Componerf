@@ -1,5 +1,5 @@
 log:
-  exp_name: 'white_bg_infer_box_scale/vase_flowe_0.3'
+  exp_name: 'abls/recompose/source/vase_flowe'
   save_interval: 1000
   eval_only: True
 guide:
@@ -15,4 +15,4 @@ optim:
   iters: 8000
 render:
   nerf_type: 'latent'
-  test_box_scale: 0.3
+  test_box_scale: 0.4

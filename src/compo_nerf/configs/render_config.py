@@ -23,7 +23,7 @@ class RenderConfig:
     bg_radius: float = 1.4
     # threshold for density grid to be occupied
     density_thresh: float = 10
-    test_box_scale: float = 0.6
+    test_box_scale: float = 0.4
     # Render width for training
     train_w: int = 64
     # Render height for training

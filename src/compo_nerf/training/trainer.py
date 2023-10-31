@@ -212,7 +212,7 @@ class Trainer:
             all_preds_depth = []
         all_global_clip_score = 0
         all_local_clip_score = 0
-        for i, data in tqdm(enumerate(dataloader)):
+        for i, data in tqdm(enumerate(dataloader), total=len(dataloader)):
             with torch.cuda.amp.autocast(enabled=self.cfg.optim.fp16):
                 # preds, preds_depth, preds_normals = self.eval_render(data)
                 with torch.no_grad():

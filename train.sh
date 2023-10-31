@@ -43,4 +43,4 @@
 # CUDA_VISIBLE_DEVICES=6 python train.py --config_path demo_configs/compo_nerf/whale.yaml
 # CUDA_VISIBLE_DEVICES=7 python train.py --config_path abls_configs/compo_nerf/table_wine_abl_local.yaml
 
-CUDA_VISIBLE_DEVICES=2 python train.py --config_path demo_configs/compo_nerf_scale0.3/computer_mouse.yaml
+CUDA_VISIBLE_DEVICES=3 python train.py --config_path demo_configs/compo_nerf/vase_flower.yaml

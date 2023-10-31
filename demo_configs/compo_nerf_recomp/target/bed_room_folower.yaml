@@ -1,0 +1,30 @@
+log:
+  exp_name: 'abls/recompose/target/bed_room_sunflower'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  text: 'A bed is next to a nightstand with a vase of sunflower on it in a room'
+  node_text_list: ['a bed', 'a nightstand', 'A bunch of sunflowers', 'a clay vase']
+  node_pos_list: [[0.0, 0.0, -0.1], [-0.4, -0.2, -0.1], [-0.4, -0.2, 0.15], [-0.4, -0.2, 0.1]]
+  node_dim_list: [[0.2, 0.32, 0.12], [0.16, 0.16, 0.16], [0.06, 0.06, 0.2], [0.1, 0.1, 0.2]]
+  box_scale: 0.7
+  num_layers: 4
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/bed_room/checkpoints/step_005000.pth'
+  iters: 1000
+  lambda_global: 100
+  lambda_local: 100
+  resume: True
+  lr: 1e-3
+  ext_node_ckpt: [
+    'experiments/abls/recompose/source/bed_room/nodes/a bed.pth',
+    'experiments/abls/recompose/source/bed_room/nodes/a nightstand.pth',
+    'experiments/abls/recompose/source/vase_flowe/nodes/A bunch of sunflowers.pth',
+    'experiments/abls/recompose/source/vase_flowe/nodes/a clay vase.pth',
+  ]
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.4
