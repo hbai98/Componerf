@@ -1,5 +1,5 @@
 log:
-  exp_name: 'white_bg_infer/Sphinxsc'
+  exp_name: 'Sphinxsc'
   save_interval: 1000
   eval_only: True
 guide:
@@ -8,8 +8,8 @@ guide:
   node_text_list: ['The Great Sphinx of Giza', 'the Great Pyramid', 'desert']
   node_pos_list: [[-0.3, -0.3, 0.2], [0.3, 0.3, 0.2],[0,0,-0.2]]
   node_dim_list: [[0.4, 0.2, 0.4], [0.3, 0.3, 0.3],[0.6,0.6,0.1]]
-  num_layers: 6
-  box_scale: 0.7
+  num_layers: 4
+  box_scale: 0.6
 optim:
   ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/Sphinxsc/checkpoints/step_008000.pth'
   iters: 8000

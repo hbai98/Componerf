@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from loguru import logger
 
@@ -51,7 +51,10 @@ class GuideConfig:
     # will no save videos
     random_view_eval: bool = False
     random_view_num: int = 200
-
+    # Recomposition
+    ext_node_ckpt: Optional[Dict[str, str]] = None
+    ext_node_pos: List[List[float]] = None
+    ext_node_dims: List[List[float]] = None
 @dataclass
 class OptimConfig:
     """ Parameters for the optimization process """
@@ -60,7 +63,7 @@ class OptimConfig:
     # Loss scale for mesh-guidance
     lambda_shape: float = 5e-3
     lambda_global: float = 100
-    lambda_local: float = 50
+    lambda_local: float = 100
     # Seed for experiment
     seed: int = 0
     # Total iters
@@ -75,8 +78,7 @@ class OptimConfig:
     resume: bool = False
     # Load existing model
     ckpt: Optional[str] = None
-    # Recomposition
-    ext_node_ckpt: Optional[List[str]] = None
+    ckpt_nodes: Optional[Dict[str, str]] = None
     # ext_node_map: Optional[List[dict]] = None
 @dataclass
 class LogConfig:

@@ -1,9 +1,11 @@
 log:
-  exp_name: 'apple_banana'
+  exp_name: 'abls/apple_banana_no_global_text'
   save_interval: 1000
   # eval_only: True
 guide:
   sjc: True
+  # use_global_calibration: False
+  use_global_text_loss: False
   text: 'a red apple and a yellow banana'
   node_text_list: ['a red apple', 'a yellow banana']
   node_pos_list: [[-0.3, 0.0, 0.0], [0.3, 0.0, 0.0]]

@@ -54,7 +54,8 @@ class CompoNeRF(nn.Module):
         self.use_cond_sublatent = self.cfg.guide.use_cond_sublatent
         self.global_weight = self.cfg.guide.global_weight
         # this is the variable to control use of global rendering
-        
+        self.sub_text_list = None
+        self.ext_ids_list = None
         self.text_z = self.calc_text_embeddings(self.prompt)
         self.pose_weight = None
         if self.use_params and self.use_global_calibration:
@@ -183,10 +184,18 @@ class CompoNeRF(nn.Module):
         return text_z
     
     def init_nodes(self, cfg):
-        sub_text_list = cfg.node_text_list  # ['red apple', 'yellow apple'],
+        self.sub_text_list = cfg.node_text_list.copy()
+        start_idx = len(self.sub_text_list)
+        if cfg.ext_node_ckpt is not None:
+            self.ext_ids_list = []
+            self.sub_text_list.extend([k for k in cfg.ext_node_ckpt])
+            self.ext_ids_list.extend([i+start_idx for i, _ in enumerate(cfg.ext_node_ckpt)])
         
         if len(cfg.node_pos_list)!=0:
             pose_list = [torch.tensor(pos) for pos in cfg.node_pos_list]
+            # add external nodes
+            if cfg.ext_node_pos is not None:
+                pose_list.extend([torch.tensor(pos) for pos in cfg.ext_node_pos])
             poses = th.stack(pose_list) 
             poses_ = poses.clone()
             # shift y and z axis
@@ -197,17 +206,20 @@ class CompoNeRF(nn.Module):
         
         if len(cfg.node_dim_list)!=0: 
             dim_list = [torch.tensor(dim) for dim in cfg.node_dim_list]
+            if cfg.ext_node_dims is not None:
+                dim_list.extend([torch.tensor(dim) for dim in cfg.ext_node_dims])
             dims = th.stack(dim_list)*self.bound*2 # map with coordinates
             dims_ = dims.clone()
             dims[:, -1] = dims_[:, 1]
             dims[:, 1] = dims_[:, -1]
         else:
             dims = self.init_dims
-            
+        # check
+        assert len(self.sub_text_list) == len(pose_list) == len(dim_list)
         # normalize the scale to [-1, 1]
         pose_list, dim_list = normalize_bound(self.bound, poses, dims, box_scale=self.box_scale)
 
-        for class_id, (sub_text, pose, dim) in enumerate(zip(sub_text_list,
+        for class_id, (sub_text, pose, dim) in enumerate(zip(self.sub_text_list,
                                                              pose_list,
                                                              dim_list)):
             self.addClassNode(class_id,

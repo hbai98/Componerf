@@ -15,3 +15,6 @@ out*
 script.sh
 point_e_model_cache/*
 TOKEN
+job*
+CompVis/
+openai/

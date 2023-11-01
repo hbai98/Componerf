@@ -48,7 +48,11 @@ python -m pip install --upgrade pip
 ```
 
 ### Installation :floppy_disk:	
-Please refer to [Pytorch](https://pytorch.org/) for customized installation. 
+[load cmake]
+Please refer to [Pytorch](https://pytorch.org/) for customized installation. (cuda 11.3 A800 sm_80):
+'''
+ conda install pytorch==1.12.1 torchvision==0.13.1 cudatoolkit=11.3 -c pytorch
+'''
 Install the common dependencies from the `requirements.txt` file
 ```bash
 pip install -r requirements.txt

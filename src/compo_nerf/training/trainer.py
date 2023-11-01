@@ -45,7 +45,9 @@ class Trainer:
         self.diffusion = self.init_diffusion()
         self.writer = SummaryWriter(self.exp_path)
         self.nerf = self.init_compo_nerf()
-
+        self.sub_text_list = self.nerf.sub_text_list
+        self.ext_ids_list = self.nerf.ext_ids_list
+        
         self.optimizer, self.scaler = self.init_optimizer()
         self.dataloaders = self.init_dataloaders()
 
@@ -54,10 +56,13 @@ class Trainer:
             self.load_checkpoint(model_only=False)
         if self.cfg.optim.ckpt is not None:
             self.load_checkpoint(self.cfg.optim.ckpt, model_only=True)
-        if self.cfg.optim.ext_node_ckpt is not None:
+        if self.cfg.optim.ckpt_nodes is not None:
+            self.load_map_nodes(self.cfg.optim.ckpt_nodes)
+        if self.cfg.guide.ext_node_ckpt is not None:
             # self.load_node_checkpoint(self.cfg.optim.ext_node_ckpt,
             #                           self.cfg.optim.ext_node_map)
-            self.load_ext_nodes(self.cfg.optim.ext_node_ckpt)
+            self.load_map_nodes(self.cfg.guide.ext_node_ckpt)
+            
         logger.info(f'Successfully initialized {self.cfg.log.exp_name}')
 
     def init_compo_nerf(self):
@@ -425,15 +430,16 @@ class Trainer:
 
                 Image.fromarray(pred).save(save_path)
 
-    def load_ext_nodes(self, ckpts):
-        for c_id, ckpt in enumerate(ckpts):
-            if ckpt == "":
-                continue
+    def load_map_nodes(self, ckpt_nodes):
+        for i, (key, ckpt) in enumerate(ckpt_nodes.items()):
             s_node = torch.load(ckpt, map_location=self.device)
-            t_node = self.nerf.dict_id2classnode[c_id]
-            text = self.nerf.dict_id2classnode[c_id].cfg.guide.text
+            if key.isdigit():
+                t_node = self.nerf.dict_id2classnode[int(key)]
+            else:
+                t_idx = self.ext_ids_list[i] 
+                t_node = self.nerf.dict_id2classnode[t_idx]
             missing_keys, unexpected_keys = t_node.load_state_dict(s_node, strict=False)
-            logger.info(f"loaded external node {text}.")
+            logger.info(f"loaded external node {key}.")
             if len(missing_keys) > 0:
                 logger.warning(f"missing keys: {missing_keys}")
             if len(unexpected_keys) > 0:
@@ -481,9 +487,12 @@ class Trainer:
         if len(unexpected_keys) > 0:
             logger.warning(f"unexpected keys: {unexpected_keys}")
 
-        for i, (cid, node) in enumerate(self.nerf.dict_id2classnode.items()):
+        for cid, node in self.nerf.dict_id2classnode.items():
+            if cid >= len(self.cfg.guide.node_text_list):
+                continue
+            pre_node = checkpoint_dict[f'model_node_{cid}']
             missing_keys, unexpected_keys = node.load_state_dict(
-                checkpoint_dict[f'model_node_{cid}'], strict=False)
+                pre_node, strict=False)
             logger.info(f"loaded model node {cid}.")
             if len(missing_keys) > 0:
                 logger.warning(f"missing keys: {missing_keys}")

@@ -1,7 +1,7 @@
 log:
-  exp_name: 'white_bg_infer/teddy_monkey_random_view'
+  exp_name: 'teddy_monkey'
   save_interval: 1000
-  eval_only: True
+  # eval_only: True
 guide:
   sjc: True
   text: 'A teddy bear and a stuffed monkey sit side by side.'
@@ -9,10 +9,10 @@ guide:
   node_pos_list: [[0, 0, 0], [1, 0, 0]]
   node_dim_list: [[1, 1, 1], [1, 1, 1]]
   box_scale: 0.6
-  num_layers: 6
+  num_layers: 4
   random_view_eval: True
 optim:
-  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/teddy_monkey/checkpoints/step_008000.pth'
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/teddy_monkey/checkpoints/step_008000.pth'
   iters: 8000
   lambda_global: 100
   lambda_local: 50

@@ -1,7 +1,7 @@
 log:
-  exp_name: 'white_bg_infer/astronaut'
+  exp_name: 'astronaut'
   save_interval: 1000
-  eval_only: True
+  # eval_only: True
 guide:
   sjc: True
   text: 'an astronaut is standing on the moon ground.'
@@ -9,9 +9,9 @@ guide:
   node_pos_list: [[0, 0, 0], [0, 0, -1.8]]
   node_dim_list: [[1, 1, 2], [2.7, 3, 0.1]]
   box_scale: 0.7
-  num_layers: 6
+  num_layers: 4
 optim:
-  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/astronaut/checkpoints/step_008000.pth'
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/astronaut/checkpoints/step_008000.pth'
   iters: 8000
   lambda_global: 100
   lambda_local: 100

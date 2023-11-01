@@ -38,7 +38,7 @@ class StableDiffusion(nn.Module):
         self.num_train_timesteps = 1000
         self.min_step = int(self.num_train_timesteps * 0.02)
         self.max_step = int(self.num_train_timesteps * 0.98)
-
+        
         logger.info(f'loading stable diffusion with {model_name}...')
                 
         # 1. Load the autoencoder model which will be used to decode the latents into image space. 
