@@ -1,0 +1,24 @@
+log:
+  exp_name: 'coffee_table_mlp4'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  text: 'The coffee sat next to a plate of warm croissants, creating a cozy breakfast scene on the rustic table.'
+  node_text_list: ['coffee', 'a plate', 'croissants', 'table']
+  node_pos_list: [[-1.01814, 0.0, -0.433387], [2.3785, 0, -0.396609], [2.3785, 0, -0.20051], [1.1236, 0.012136, -1.5354]]
+  node_dim_list: [[0.6, 0.6, 1.0], [1.3, 1.3, 0.3], [0.6, 0.6, 0.6], [4.199, 3.4, 0.7]]
+  box_scale: 0.6
+  num_layers: 4
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/bed_room/checkpoints/step_005000.pth'
+  iters: 8000
+  lambda_global: 100
+  lambda_local: 100
+  resume: True
+  lr: 1e-3
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.5

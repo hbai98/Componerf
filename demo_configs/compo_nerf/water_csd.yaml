@@ -1,0 +1,25 @@
+log:
+  # exp_name: 'water_table'
+  exp_name: 'test'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  # csd: True
+  text: "A glass of water on a wooden table refracts the morning sunlight, casting a rainbow onto the table's surface."
+  node_text_list: ['A glass of water', 'a wooden table']
+  node_pos_list: [[0, 0, 0.28], [0, 0, 0]]
+  node_dim_list: [[0.2, 0.2, 0.3], [0.5, 0.5, 0.3]]
+  # box_scale: 0.6 # 0.7
+  num_layers: 4
+optim:
+  iters: 10000
+  lambda_global: 50
+  lambda_local: 100
+  resume: True
+  lr: 1e-3
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.5

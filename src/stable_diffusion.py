@@ -12,8 +12,6 @@ import torch.nn.functional as F
 from loguru import logger
 import numpy as np
 from math import sqrt
-import time
-
 def _sqrt(x):
     if isinstance(x, float):
         return sqrt(x)
@@ -45,6 +43,7 @@ class StableDiffusion(nn.Module):
         self.vae = AutoencoderKL.from_pretrained(model_name, subfolder="vae", use_auth_token=self.token).to(self.device)
 
         # 2. Load the tokenizer and text encoder to tokenize and encode the text. 
+        
         self.tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
         self.text_encoder = CLIPTextModel.from_pretrained("openai/clip-vit-large-patch14").to(self.device)
         self.image_encoder = None
@@ -182,6 +181,35 @@ class StableDiffusion(nn.Module):
         us = us[::-1]
         return us
 
+    def train_step_csd(self, text_embeddings, inputs, guidance_scale=100, res_latent=None):
+
+        if not self.latent_mode:
+            pred_rgb_512 = F.interpolate(inputs, (512, 512), mode='bilinear', align_corners=False)
+            latents = self.encode_imgs(pred_rgb_512)
+        else:
+            latents = inputs
+       
+        if res_latent is not None:
+            B, C, H, W = latents.shape
+            res_latent = rearrange(res_latent, '(C H W) -> C H W', C=C, H=H)
+            latents = latents + res_latent
+            
+        with torch.no_grad():
+            chosen_x = np.random.choice(self.us[30:-10], 1, replace=False)
+            chosen_x = chosen_x.reshape(-1, 1, 1, 1)
+            chosen_x = torch.as_tensor(chosen_x, device=self.device, dtype=torch.float32)
+            # chosen_σs = us[i]
+            noise = torch.randn(1, *latents.shape[1:], device=self.device)
+            zs = latents + chosen_x * noise
+            Ds = self.denoise(zs, chosen_x, text_embeddings, csd=True)
+            grad = (Ds - latents) / chosen_x
+            grad = grad.mean(0, keepdim=True)
+        
+        latents.backward(-grad, retain_graph=True)
+
+
+        return 0  # dummy loss value
+    
     def train_step_sjc(self, text_embeddings, inputs, guidance_scale=100, res_latent=None):
 
         # interp to 512x512 to be fed into vae.
@@ -250,9 +278,8 @@ class StableDiffusion(nn.Module):
 
 
         return 0  # dummy loss value
-
     @torch.no_grad()
-    def denoise(self, xs, σ, c):
+    def denoise(self, xs, σ, c, csd=False):
         N = xs.shape[0]
         cond_t, σ = self.time_cond_vec(N, σ)
         unscaled_xs = xs
@@ -261,9 +288,12 @@ class StableDiffusion(nn.Module):
         noise_pred = self.unet(x_in, cond_t, encoder_hidden_states=c).sample
 
         e_t_uncond, e_t = noise_pred.chunk(2)
-        output = e_t_uncond + self.scale * (e_t - e_t_uncond)
-
-        Ds = unscaled_xs - σ * output
+        if csd:
+            noise_pred = (e_t - e_t_uncond)
+            Ds = unscaled_xs - noise_pred
+        else:
+            output = e_t_uncond + self.scale * (e_t - e_t_uncond)
+            Ds = unscaled_xs - σ * output
         return Ds
 
     def time_cond_vec(self, N, σ):

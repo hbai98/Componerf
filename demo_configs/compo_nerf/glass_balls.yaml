@@ -1,7 +1,7 @@
 log:
   exp_name: 'glass_ball_base'
   save_interval: 1000
-  # eval_only: True
+  eval_only: True
 guide:
   sjc: True
   text: 'Crystal ball, Dichroic glass ball, Murano glass ball, and Solar-powered glass ball are placed on the glass table.'
@@ -22,6 +22,7 @@ render:
   nerf_type: 'latent'
   density_thresh: 10
   density_init: 5e-1
-  test_box_scale: 0.5
+  # test_box_scale: 0.5
+  test_box_scale: 0.3
 
 

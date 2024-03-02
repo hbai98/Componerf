@@ -559,3 +559,36 @@ def normalize_bound(bound, poses, dims, box_scale=0.8):
     # dims_[:, -1] = dims[:, 1]
     # shift based on the relative distance [dounding box sizes/ positions]
     return poses, dims
+
+
+# https://github.com/CVMI-Lab/Classifier-Score-Distillation/tree/CSD-MVDream
+# PyTorch Tensor type
+from torch import Tensor
+from jaxtyping import Float
+
+def normalize_camera(camera_matrix):
+    ''' normalize the camera location onto a unit-sphere'''
+    if isinstance(camera_matrix, np.ndarray):
+        camera_matrix = camera_matrix.reshape(-1,4,4)
+        translation = camera_matrix[:,:3,3]
+        translation = translation / (np.linalg.norm(translation, axis=1, keepdims=True) + 1e-8)
+        camera_matrix[:,:3,3] = translation
+    else:
+        camera_matrix = camera_matrix.reshape(-1,4,4)
+        translation = camera_matrix[:,:3,3]
+        translation = translation / (torch.norm(translation, dim=1, keepdim=True) + 1e-8)
+        camera_matrix[:,:3,3] = translation
+    return camera_matrix.reshape(-1,16)
+
+def get_camera_cond(self, 
+        camera: Float[Tensor, "B 4 4"],
+        fovy = None,
+):
+    # Note: the input of threestudio is already blender coordinate system
+    # camera = convert_opengl_to_blender(camera)
+    if self.cfg.camera_condition_type == "rotation": # normalized camera
+        camera = normalize_camera(camera)
+        camera = camera.flatten(start_dim=1)
+    else:
+        raise NotImplementedError(f"Unknown camera_condition_type={self.cfg.camera_condition_type}")
+    return camera

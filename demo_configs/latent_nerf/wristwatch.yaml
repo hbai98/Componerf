@@ -1,0 +1,11 @@
+log:
+  exp_name: 'latent/wristwatchV1.5'
+  save_interval: 1000
+guide:
+  sjc: False
+  text: 'A silvery wristwatch lay on a velvet cloth, its glossy surface reflecting the soft glow of a nearby candle, creating a dance of light and shadow.'
+  diffusion_name: 'CompVis/stable-diffusion-v1-5'
+optim:
+  iters: 10000
+render:
+  nerf_type: 'latent'

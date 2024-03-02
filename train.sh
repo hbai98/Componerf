@@ -1,7 +1,6 @@
 #!/bin/bash
 #SBATCH -p i64m1tga800u
 #SBATCH -J componerf
-#SBATCH -n 16
 #SBATCH --gres=gpu:1
 #SBATCH -N 1
 #SBATCH -o job.%j.out
@@ -36,8 +35,8 @@ conda activate componerf
 # python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/apple_and_banana.yaml
 # python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/astronaut.yaml
 # python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/bed_room.yaml
-
-python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/chess.yaml
+# python train.py --config_path demo_configs/compo_nerf_recomp/table_apple.yaml
+# python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/chess.yaml
 # python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/eiffel.yaml
 # python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/football_and_basketball.yaml
 
@@ -50,3 +49,13 @@ python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_confi
 # python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/vase_flower.yaml
 # python train.py --config_path /hpc2hdd/home/hbai965/workdir/CompoNeRF/demo_configs/compo_nerf/whale.yaml
 
+# python train.py --config_path demo_configs/compo_nerf_recomp/nightstand_ball.yaml
+# python train.py --config_path demo_configs/compo_nerf_recomp/bed_room_flower.yaml
+# python train.py --config_path demo_configs/compo_nerf_recomp/nightstand_ball.yaml
+# python train.py --config_path demo_configs/compo_nerf/boy_bike.yaml
+# python train.py --config_path demo_configs/compo_nerf/wristwatchV1.5.yaml
+# python train.py --config_path demo_configs/compo_nerf/glass_balls.yaml
+python train.py --config_path demo_configs/compo_nerf/waterV1.5.yaml
+
+# python scripts/train_latent_nerf.py --config_path demo_configs/latent_nerf/wristwatch.yaml
+# python scripts/train_latent_nerf.py --config_path demo_configs/latent_nerf/water.yaml

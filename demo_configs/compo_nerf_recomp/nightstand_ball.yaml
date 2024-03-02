@@ -1,0 +1,30 @@
+log:
+  exp_name: 'recompose/nightstand_ball' # 
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  text: "On the polished surface of the mahogany nightstand, a lamp with a shade of woven silk cast a warm glow over a Murano glass ball and its companion, a shimmering Dichroic glass ball, creating a dance of colors against the darkening twilight."
+  node_text_list: ['a nightstand', 'Murano glass ball', 'Dichroic glass ball', 'lamp']
+  node_pos_list: [[-0.4, -0.2, -0.1], [-0.4, -0.10684, 0.025661], [-0.30324, -0.21632, 0.025661], [-0.45426, -0.25889, 0.054831]]
+  node_dim_list: [[0.16, 0.16, 0.16], [0.04, 0.04, 0.04], [0.04, 0.04, 0.04],[0.06, 0.06, 0.1]]
+  box_scale: 0.6
+  num_layers: 6
+  
+optim:
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/bed_room/checkpoints/step_005000.pth'
+  ckpt_nodes:
+    '0': 'experiments/bed_room/nodes/a nightstand.pth'
+    '1': 'experiments/glass_ball_base/nodes/Murano glass ball.pth'
+    '2': 'experiments/glass_ball_base/nodes/Dichroic glass ball.pth'
+    '3': 'experiments/bed_room/nodes/a table lamp.pth'
+  iters: 3000
+  lambda_global: 100
+  lambda_local: 100
+  # resume: True
+  lr: 1e-3
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.4

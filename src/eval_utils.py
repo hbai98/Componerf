@@ -24,6 +24,7 @@ def get_label_text(data, main_text):
 
 def get_global_local_imgs(preds):
     local_imgs = []
+    global_img = None
     for key in preds.keys():
         if 'global_image' in key and 'norm' not in key:
             global_img = tensor2numpy(preds[key][0])

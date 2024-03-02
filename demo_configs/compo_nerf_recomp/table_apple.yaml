@@ -23,30 +23,35 @@
 #   eval_w: 128
 #   eval_h: 128
 log:
-  exp_name: 'abls/recompose/table_wine'
+  exp_name: 'recompose/table_apple'
   save_interval: 1000
   eval_only: True
 guide:
   sjc: True
-  text: 'Glasses of wine, salad and french bread on a wooden table.'
-  node_text_list: ['Glasses of wine', 'salad', 'french bread', 'wooden table']
-  node_pos_list: [[-0.26447, 0.5087, 0.27625], [-0.25545, -0.36888, 0.14814], [0.44915, 0.14557, 0.17127], [0.12505, -0.027665, -0.075758]]
+  text: 'Glasses of juice, salad, apple and french bread on a wooden table.'
+  node_text_list: ['Glasses of juice', 'salad', 'french bread', 'wooden table']
+  node_pos_list: [[-0.52894, 1.0174, 0.5525], [-0.5109, -0.73776, 0.29628], [0.8983, 0.29114, 0.34254], [0.2501, -0.05533, -0.151516]]
   node_dim_list: [[0.32, 0.32, 0.86], [0.634, 0.684, 0.578], [0.378, 0.6, 0.604], [1.504, 1.504, 0.266]]
   box_scale: 0.6
   num_layers: 4
   use_global_density: True
   use_global_calibration: True
+  # random_view_eval: True # 
   # use_cond_sublatent: False
   # use_learnable_pos_dim: True 
   # global_weight: 1e-1
   use_hyper_params: True
+  ext_node_ckpt:
+    apple: 'experiments/apple_banana/nodes/a red apple.pth'
+  ext_node_pos: [[0.8073, -0.896, 0.2962]]
+  ext_node_dims: [[0.4, 0.4, 0.338]]
 optim:
-  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/abls/table_wine_all_MLP_6_density_hyper/checkpoints/step_008000.pth'
-  iters: 8000
+  # ckpt: 'experiments/table_wine/checkpoints/step_008000.pth' # resume has lower priority than this
+  iters: 3000
   lambda_global: 100
   lambda_local: 100
   resume: True
-  lr: 1e-3
+
 render:
   nerf_type: 'latent'
   density_thresh: 10
@@ -54,4 +59,4 @@ render:
 #  render in high resolution
   eval_w: 128
   eval_h: 128
-  test_box_scale: 0.3
+  test_box_scale: 0.5

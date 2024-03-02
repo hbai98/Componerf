@@ -1,13 +1,13 @@
 log:
-  exp_name: 'abls/recompose/target/bed_room_sunflower'
+  exp_name: 'recompose/bed_room_flower'
   save_interval: 1000
   # eval_only: True
 guide:
   sjc: True
   text: 'A bed is next to a nightstand with a vase of sunflower on it in a room'
   node_text_list: ['a bed', 'a nightstand', 'A bunch of sunflowers', 'a clay vase']
-  node_pos_list: [[0.0, 0.0, -0.1], [-0.4, -0.2, -0.1], [-0.4, -0.2, 0.15], [-0.4, -0.2, 0.1]]
-  node_dim_list: [[0.2, 0.32, 0.12], [0.16, 0.16, 0.16], [0.06, 0.06, 0.2], [0.1, 0.1, 0.2]]
+  node_pos_list: [[0.0, 0.0, -0.1], [-0.4, -0.2, -0.1], [-0.4, -0.2, 0.17], [-0.4, -0.2, 0.1]]
+  node_dim_list: [[0.2, 0.32, 0.12], [0.16, 0.16, 0.16], [0.06, 0.06, 0.2], [0.08, 0.08, 0.06]]
   box_scale: 0.7
   num_layers: 4
   

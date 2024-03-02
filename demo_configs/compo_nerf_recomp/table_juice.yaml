@@ -23,13 +23,13 @@
 #   eval_w: 128
 #   eval_h: 128
 log:
-  exp_name: 'recompose/table_apple'
+  exp_name: 'abls/recompose/target/table_juice_infer'
   save_interval: 1000
-  # eval_only: True
+  eval_only: True
 guide:
   sjc: True
-  text: 'Glasses of juice, salad, apple and french bread on a wooden table.'
-  node_text_list: ['Glasses of juice', 'salad', 'french bread', 'wooden table']
+  text: 'Glasses of juice, apple and french bread on a wooden table.'
+  node_text_list: ['Glasses of juice', 'apple', 'french bread', 'wooden table']
   node_pos_list: [[-0.52894, 1.0174, 0.5525], [-0.5109, -0.73776, 0.29628], [0.8983, 0.29114, 0.34254], [0.2501, -0.05533, -0.151516]]
   node_dim_list: [[0.32, 0.32, 0.86], [0.634, 0.684, 0.578], [0.378, 0.6, 0.604], [1.504, 1.504, 0.266]]
   box_scale: 0.6
@@ -41,17 +41,19 @@ guide:
   # use_learnable_pos_dim: True 
   # global_weight: 1e-1
   use_hyper_params: True
-  ext_node_ckpt:
-    apple: 'experiments/apple_banana/nodes/a red apple.pth'
-  ext_node_pos: [[0.8073, -0.896, 0.2962]]
-  ext_node_dims: [[0.4, 0.4, 0.338]]
 optim:
-  ckpt: 'experiments/table_wine/checkpoints/step_008000.pth'
-  iters: 3000
+  # ckpt: 'experiments/abls/recompose/target/table_juice/checkpoints/step_005000.pth'
+  iters: 5000
   lambda_global: 100
   lambda_local: 100
   resume: True
-
+  ext_node_ckpt: [
+    "",
+    "experiments/abls/recompose/source/apple_banana/nodes/a red apple.pth",
+    "",
+    "",
+    ""
+  ]
 render:
   nerf_type: 'latent'
   density_thresh: 10
@@ -59,4 +61,4 @@ render:
 #  render in high resolution
   eval_w: 128
   eval_h: 128
-  test_box_scale: 0.4
+  test_box_scale: 0.5 # 0.4 # samller closer

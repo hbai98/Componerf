@@ -1,0 +1,23 @@
+log:
+  exp_name: 'bicycle_streetlamp2-v1-5'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: True
+  text: 'Under the warm glow of a streetlamp, a shiny red bicycle leaned against a rough, old stone wall, casting a long, intricate shadow on the cobblestone path.'
+  node_text_list: ['streetlamp', 'red bicycle', 'stone wall', 'path']
+  node_pos_list: [[0.2505, -0.45414, 0.44727], [1.741, -0.769, -0.241], [2.087, -0.638, -0.037], [1.179, -0.464, -1.184]]
+  node_dim_list: [[0.3, 0.3, 1.5], [0.4, 1.2, 1.0], [0.2, 1.5, 1.3], [2.0, 2.0, 0.4]]
+  # box_scale: 0.6 # 0.7
+  num_layers: 4
+optim:
+  iters: 10000
+  lambda_global: 50
+  lambda_local: 100
+  resume: True
+  lr: 1e-3
+render:
+  nerf_type: 'latent'
+  density_thresh: 10
+  density_init: 5e-1
+  test_box_scale: 0.5

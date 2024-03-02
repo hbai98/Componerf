@@ -56,14 +56,17 @@ class Trainer:
             self.load_checkpoint(model_only=False)
         if self.cfg.optim.ckpt is not None:
             self.load_checkpoint(self.cfg.optim.ckpt, model_only=True)
-        if self.cfg.optim.ckpt_nodes is not None:
-            self.load_map_nodes(self.cfg.optim.ckpt_nodes)
-        if self.cfg.guide.ext_node_ckpt is not None:
-            # self.load_node_checkpoint(self.cfg.optim.ext_node_ckpt,
-            #                           self.cfg.optim.ext_node_map)
-            self.load_map_nodes(self.cfg.guide.ext_node_ckpt)
-            
         logger.info(f'Successfully initialized {self.cfg.log.exp_name}')
+
+        if not self.cfg.log.eval_only:
+            if self.cfg.optim.ckpt_nodes is not None:
+                self.load_map_nodes(self.cfg.optim.ckpt_nodes)
+            if self.cfg.guide.ext_node_ckpt is not None:
+                # self.load_node_checkpoint(self.cfg.optim.ext_node_ckpt,
+                #                           self.cfg.optim.ext_node_map)
+                self.load_map_nodes(self.cfg.guide.ext_node_ckpt)
+            logger.info(f'Successfully initialized external nodes.')
+            
 
     def init_compo_nerf(self):
         if self.cfg.render.backbone == 'grid':
@@ -488,16 +491,15 @@ class Trainer:
             logger.warning(f"unexpected keys: {unexpected_keys}")
 
         for cid, node in self.nerf.dict_id2classnode.items():
-            if cid >= len(self.cfg.guide.node_text_list):
-                continue
-            pre_node = checkpoint_dict[f'model_node_{cid}']
-            missing_keys, unexpected_keys = node.load_state_dict(
-                pre_node, strict=False)
-            logger.info(f"loaded model node {cid}.")
-            if len(missing_keys) > 0:
-                logger.warning(f"missing keys: {missing_keys}")
-            if len(unexpected_keys) > 0:
-                logger.warning(f"unexpected keys: {unexpected_keys}")
+            if f'model_node_{cid}' in checkpoint_dict:
+                pre_node = checkpoint_dict[f'model_node_{cid}']
+                missing_keys, unexpected_keys = node.load_state_dict(
+                    pre_node, strict=False)
+                logger.info(f"loaded model node {cid}.")
+                if len(missing_keys) > 0:
+                    logger.warning(f"missing keys: {missing_keys}")
+                if len(unexpected_keys) > 0:
+                    logger.warning(f"unexpected keys: {unexpected_keys}")
 
         if self.cfg.render.cuda_ray:
             if 'mean_count' in checkpoint_dict:

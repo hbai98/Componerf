@@ -1,0 +1,13 @@
+log:
+  # exp_name: 'water_table'
+  exp_name: 'latent/water_tableV1.5'
+  save_interval: 1000
+  # eval_only: True
+guide:
+  sjc: False
+  text: "A glass of water on a wooden table refracts the morning sunlight, casting a rainbow onto the table's surface."
+  diffusion_name: 'CompVis/stable-diffusion-v1-5'
+optim:
+  iters: 10000
+render:
+  nerf_type: 'latent'

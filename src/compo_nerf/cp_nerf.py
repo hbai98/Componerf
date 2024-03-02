@@ -12,8 +12,7 @@ from src.compo_nerf.models.nerf_utils import MLP, trunc_exp
 from src.compo_nerf.models.encoding import get_encoder
 from src.compo_nerf.models.network_grid import NeRFNetwork
 
-from src.compo_nerf.cp_nerf_utils import box_pts, world2object, get_common_rays, func_crop, normalize_bound
-from src.compo_nerf.cp_nerf_utils import sigmoid, inv_poses, split_poses_dims, inv_dims
+from src.compo_nerf.cp_nerf_utils import *
 from einops import rearrange, repeat
 from itertools import chain
 import torch.nn.functional as F
@@ -31,6 +30,8 @@ class CompoNeRF(nn.Module):
         self.bound = cfg.render.bound
         self.device = th.device('cuda' if th.cuda.is_available() else 'cpu')
         self.sjc = cfg.guide.sjc
+        self.csd = cfg.guide.csd
+        
         additional_dim_size = 1
         self.dict_id2classnode = {}
         self.num_classNode = 0
@@ -371,10 +372,13 @@ class CompoNeRF(nn.Module):
         Returns:
             _type_: _description_
         """
-
+        # print(data.keys())
+        # print(data['poses'])
+        # print(data['poses'].shape)
+        # assert 0
         rays_o, rays_d = data['rays_o'], data['rays_d']
         prefix = rays_o.shape[:-1]
-        B = rays_o.size(0)
+        B = data['rays_o'].size(0)
         # rays_o, rays_d: [B, N, 3], assumes B == 1
         # return: image: [B, N, 3], depth: [B, N]
         rays_o = rays_o.contiguous().view(-1, 3)  # world frame
@@ -436,7 +440,7 @@ class CompoNeRF(nn.Module):
         # ------------------------------------------------------
         # local rendering
 
-        
+         
         # use local indexes to infer each ray in the local bounding boxes
         for i, (cid, node) in enumerate(self.dict_id2classnode.items()):
             counter = self.update_counter(node)
@@ -550,7 +554,8 @@ class CompoNeRF(nn.Module):
                 cid=cid)
             if self.training:
                 _, _, _losses = node.get_single_node_losses(
-                    (data['dir'], B, data['H'], data['W']),
+                    # (data['dir'], B, data['H'], data['W']),
+                    data,
                     # intersected rays' categories -> iIdx2CT
                     self.diffusion,
                     intermediate_results,
@@ -742,12 +747,13 @@ class CompoNeRF(nn.Module):
         if self.training:
             if self.use_global_text_loss:
                 global_losses = self.get_global_losses(
-                    (data['dir'], B, H, W),
+                    # (data['dir'], B, H, W),
+                    data,
                     res, crop=self.train_with_crop)
              # idx -> world ray index -> to composite image
                 results['global_losses'] = global_losses
-            # if self.use_local_loss:
-            results['local_losses'] = th.stack(local_losses).mean()
+            if self.use_local_loss:
+                results['local_losses'] = th.stack(local_losses).mean()
         return results
 
     def local_render(self, data, **kwargs):
@@ -785,17 +791,21 @@ class CompoNeRF(nn.Module):
         return results
 
     def get_global_losses(self, data, outputs, crop=False):
-        B, H, W = data[1:]
+        B = data['rays_o'].size(0)
+        # cameras = data['poses'] # [B 4 4]
+        H, W = data['H'], data['W']
         # text embeddings
         wIdxes = outputs['wIdxes']
         img = outputs['image'].contiguous()
         if self.cfg.guide.append_direction:
-            dirs = data[0]  # [B,]
+            dirs = data['dir']  # [B,]
             text_z = self.text_z[dirs] # [6->1]
         else:
             text_z = self.text_z
         pred_rgb = img.reshape(
             B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        
+        
 
         # encode pos & dim if learnable
         h = None 
@@ -827,6 +837,8 @@ class CompoNeRF(nn.Module):
         # add bg_color
         if self.sjc:
             loss_guidance = self.diffusion.train_step_sjc(text_z, pred_rgb, res_latent=h)
+        elif self.csd:
+            loss_guidance = self.diffusion.train_step_csd(text_z, pred_rgb, res_latent=h)
         else:
             loss_guidance = self.diffusion.train_step(
                 text_z, pred_rgb, guidance_scale=self.cfg.optim.lambda_global)
@@ -855,6 +867,8 @@ class ClassNode(nn.Module):
         self.obj_id = None
         self.cfg = cfg
         self.sjc = cfg.guide.sjc
+        self.csd = cfg.guide.csd
+        
         # TODO from cfg
         self.lambda_sparsity = 1.0
         self.pose = pose
@@ -875,7 +889,10 @@ class ClassNode(nn.Module):
                                crop=False, compact=False, use_local_loss=True, use_cond_sublatent=False):
         # intermediate results: ['xyzs', 'sigmas', 'image', 'weights_sum']
         # data:['dir', 'B', 'H', 'W',] -> H, W is the orignal feature map sizes
-        B, H, W = data[1:]
+        # B, H, W = data[1:]
+        # (data['dir'], B, data['H'], data['W'])
+        B = data['rays_o'].size(0)
+        H, W = data['H'], data['W']        
         xyzs = intermediate_results['xyzs']
         sigmas = intermediate_results['sigmas']
         img = intermediate_results['img']
@@ -903,7 +920,7 @@ class ClassNode(nn.Module):
             pred_ws = rearrange(pred_ws, 'H W D -> 1 D H W')
 
         if self.cfg.guide.append_direction:
-            dirs = data[0]  # [B,]
+            dirs = data['dir']  # [B,]
             # test dataset no direction
             text_z = self.text_z[dirs]
         else:
@@ -914,6 +931,8 @@ class ClassNode(nn.Module):
         if use_local_loss:
             if self.sjc:
                 losses += diffusion.train_step_sjc(text_z, pred_rgb)
+            if self.csd:
+                losses += diffusion.train_step_csd(text_z, pred_rgb)
             else:
                 losses += diffusion.train_step(text_z, pred_rgb, self.cfg.optim.lambda_local)
             if self.shape_prior is not None:
@@ -928,7 +947,5 @@ class ClassNode(nn.Module):
         self.pose = pose
         self.theta_y = theta_y
         self.dim = dim
-
-
 
 

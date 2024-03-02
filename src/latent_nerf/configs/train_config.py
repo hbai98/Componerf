@@ -72,7 +72,9 @@ class LogConfig:
     max_keep_ckpts: int = 2
     # Skip decoding and vis only depth and normals
     skip_rgb: bool = False
-
+    # Save video at the full evaluation
+    save_video: bool = True
+    
     @property
     def exp_dir(self) -> Path:
         return self.exp_root / self.exp_name

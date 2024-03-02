@@ -1,19 +1,21 @@
 log:
-  exp_name: 'abls/recompose/apple_banana'
+  exp_name: 'abls/apple_banana_no_global_all'
   save_interval: 1000
-  eval_only: True
+  # eval_only: True
 guide:
   sjc: True
+  use_global_calibration: False
+  use_global_text_loss: False
   text: 'a red apple and a yellow banana'
   node_text_list: ['a red apple', 'a yellow banana']
   node_pos_list: [[-0.3, 0.0, 0.0], [0.3, 0.0, 0.0]]
   node_dim_list: [[0.8, 0.8, 0.8], [0.3, 0.8, 0.3]]
-  num_layers: 3
-  box_scale: 0.7
+  num_layers: 4
+  box_scale: 0.6
   random_view_eval: True
 optim:
-  ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/apple_banana/checkpoints/step_005000.pth'
-  iters: 5000
+  # ckpt: '/home/data/haotianbai/workdir/CompoNeRF/experiments/apple_banana/checkpoints/step_005000.pth'
+  iters: 8000
   resume: True
 render:
   nerf_type: 'latent'

@@ -51,7 +51,7 @@ class RenderConfig:
     # Which NeRF backbone to use
     backbone: str = 'grid'
     # initalize density values
-    density_init: float = 0.5
+    density_init: float = 5e-1
     density_bitfield_init: float = 0
     # Define the nerf output type
     nerf_type: NeRFType = NeRFType['latent']

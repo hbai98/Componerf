@@ -13,6 +13,7 @@ class GuideConfig:
     # Guiding text prompt
     text: str
     sjc: bool = False
+    csd: bool = False
     norm_box: bool = False
     # global color dependent on positions from the world frame
     use_global_albedo: bool = True

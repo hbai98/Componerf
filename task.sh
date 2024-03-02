@@ -24,4 +24,4 @@
 # python train.py --config_path /home/data/haotianbai/workdir/CompoNeRF/demo_configs/compo_nerf_scale0.3/vase_flower.yaml
 # python train.py --config_path /home/data/haotianbai/workdir/CompoNeRF/demo_configs/compo_nerf_scale0.3/whale.yaml
 
-python train.py --config_path /home/data/haotianbai/workdir/CompoNeRF/demo_configs/compo_nerf/bed_room.yaml
+python train.py --config_path /home/data/haotianbai/workdir/CompoNeRF/demo_configs/compo_nerf/bicycle_streetlamp.yaml
